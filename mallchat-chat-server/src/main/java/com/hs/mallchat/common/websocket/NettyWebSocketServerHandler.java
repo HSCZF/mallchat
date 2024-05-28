@@ -29,8 +29,8 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state() == IdleState.READER_IDLE) {
                 System.out.println("读空闲时间");
-                //todo 30s心跳时间到了，用户已下线
-//                userOffline(ctx.channel());
+                //30s心跳时间到了，用户已下线
+                ctx.channel().close();
             }
         }
     }
