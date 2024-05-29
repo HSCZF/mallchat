@@ -2,6 +2,9 @@ package com.hs.mallchat.common;
 
 import com.hs.mallchat.common.user.dao.UserDao;
 import com.hs.mallchat.common.user.domain.entity.User;
+import me.chanjar.weixin.common.error.WxErrorException;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ public class DaoTest {
 
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private WxMpService wxMpService;
 
     @Test
     public void test(){
@@ -28,7 +33,13 @@ public class DaoTest {
         user.setOpenId("1334");
         boolean save = userDao.save(user);
         System.out.println(save);
+    }
 
+    @Test
+    public void testWxService() throws WxErrorException {
+        WxMpQrCodeTicket wxMpQrCodeTicket = wxMpService.getQrcodeService().qrCodeCreateTmpTicket(1, 1000);
+        String url = wxMpQrCodeTicket.getUrl();
+        System.out.println(url);
     }
 
 

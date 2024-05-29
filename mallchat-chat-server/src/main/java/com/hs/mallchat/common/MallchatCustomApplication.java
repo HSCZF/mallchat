@@ -4,6 +4,7 @@ package com.hs.mallchat.common;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 
 /**
  * @Author: CZF
@@ -11,7 +12,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 
 @SpringBootApplication(scanBasePackages = {"com.hs.mallchat"})
-@MapperScan("com.hs.mallchat.common.**.mapper")
+@MapperScan({"com.hs.mallchat.common.**.mapper"})
+@ServletComponentScan
 public class MallchatCustomApplication {
 
     public static void main(String[] args) {
