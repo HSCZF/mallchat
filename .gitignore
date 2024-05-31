@@ -67,7 +67,6 @@ Temporary Items
 # 比如配置文件的，不能提交到git，被人看见端口号，密码这些吧，让它忽略提交
 CodeGenerator.java
 TestController.java
-application-test.properties
 application-prod.properties
 application-my-prod.properties
 application-remote-prod.properties
