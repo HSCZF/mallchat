@@ -14,7 +14,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.NettyRuntime;
 import io.netty.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +37,6 @@ public class NettyWebSocketServer {
     private EventLoopGroup workerGroup = new NioEventLoopGroup(NettyRuntime.availableProcessors());
 
 
-
     /**
      * 该方法在对象初始化完成后执行，用于启动某些进程或执行初始化操作。
      * 该方法标记为@PostConstruct，表示它是在依赖注入完成后，但在该类的任何服务方法被调用前执行的。
@@ -46,7 +44,7 @@ public class NettyWebSocketServer {
      * @throws InterruptedException 如果在执行启动过程中线程被中断，则抛出此异常。
      */
     @PostConstruct
-    public void start() throws InterruptedException{
+    public void start() throws InterruptedException {
         run(); // 执行启动逻辑
     }
 
@@ -87,6 +85,8 @@ public class NettyWebSocketServer {
                          *  2. 这就是为什么当浏览器发送大量数据时，就会发出多次 http请求的原因
                          */
                         pipeline.addLast(new HttpObjectAggregator(8192));
+                        //保存请求头
+                        pipeline.addLast(new MyHeaderCollectHandler());
                         //保存用户ip
 //                        pipeline.addLast(new HttpHeadersHandler());
                         /**

@@ -69,6 +69,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     /**
      * 生成请求登录的二维码
+     *
      * @param channel
      */
     @SneakyThrows
@@ -83,7 +84,7 @@ public class WebSocketServiceImpl implements WebSocketService {
     }
 
     @Override
-    public void offline(Channel channel) {
+    public void remove(Channel channel) {
         ONLINE_WS_MAP.remove(channel);
         //todo 用户下线
     }
@@ -118,6 +119,25 @@ public class WebSocketServiceImpl implements WebSocketService {
             return;
         }
         sendMsg(channel, WebSocketAdapter.buildScanSuccessResp());
+    }
+
+    @Override
+    public void authorize(Channel channel, String token) {
+        Long validUid = loginService.getValidUid(token);
+        if (Objects.nonNull(validUid)) {
+            User user = userDao.getById(validUid);
+            loginSuccess(channel, user, token);
+        } else {
+            sendMsg(channel, WebSocketAdapter.buildInvalidTokenResp());
+        }
+    }
+
+    private void loginSuccess(Channel channel, User user, String token) {
+        // 保存channel的对应id
+        WSChannelExtraDTO wsChannelExtraDTO = ONLINE_WS_MAP.get(channel);
+        wsChannelExtraDTO.setUid(user.getId());
+        // 推送成功消息，用户上线成功的事件
+        sendMsg(channel, WebSocketAdapter.buildLoginSuccessResp(user, token));
     }
 
     private void sendMsg(Channel channel, WSBaseResp<?> resp) {

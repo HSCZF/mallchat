@@ -14,6 +14,7 @@ public class WebSocketAdapter {
 
     /**
      * LOGIN_URL(1, "登录二维码返回", WSLoginUrl.class),
+     *
      * @param wxMpQrCodeTicket
      * @return
      */
@@ -26,6 +27,7 @@ public class WebSocketAdapter {
 
     /**
      * LOGIN_SCAN_SUCCESS(2, "用户扫描成功等待授权", null),
+     *
      * @return
      */
     public static WSBaseResp<?> buildScanSuccessResp() {
@@ -36,6 +38,7 @@ public class WebSocketAdapter {
 
     /**
      * LOGIN_SUCCESS(3, "用户登录成功返回用户信息", WSLoginSuccess.class),
+     *
      * @param user
      * @param code
      * @return
@@ -54,4 +57,9 @@ public class WebSocketAdapter {
     }
 
 
+    public static WSBaseResp<?> buildInvalidTokenResp() {
+        WSBaseResp<WSLoginUrl> resp = new WSBaseResp<>();
+        resp.setType(WSRespTypeEnum.INVALIDATE_TOKEN.getType());
+        return resp;
+    }
 }
