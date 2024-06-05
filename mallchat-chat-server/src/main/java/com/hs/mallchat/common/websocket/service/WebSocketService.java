@@ -13,9 +13,11 @@ public interface WebSocketService {
 
     void handleLoginReq(Channel channel);
 
-    void offline(Channel channel);
+    void remove(Channel channel);
 
     void scanLoginSuccess(Integer code, Long id);
 
     void scanSuccess(Integer code);
+
+    void authorize(Channel channel, String token);
 }

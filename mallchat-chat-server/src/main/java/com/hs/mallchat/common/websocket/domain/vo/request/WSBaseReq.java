@@ -13,6 +13,9 @@ public class WSBaseReq {
      * @see com.hs.mallchat.common.websocket.domain.enums.WSReqTypeEnum
      */
     private Integer type;
+    /**
+     * 请求数据
+     */
     private String data;
 
 }
