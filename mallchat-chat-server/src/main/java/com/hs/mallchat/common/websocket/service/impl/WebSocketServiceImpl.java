@@ -86,7 +86,9 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Override
     public void remove(Channel channel) {
         ONLINE_WS_MAP.remove(channel);
+
         //todo 用户下线了
+
     }
 
     /**
