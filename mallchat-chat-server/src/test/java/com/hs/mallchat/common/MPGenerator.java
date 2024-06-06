@@ -38,7 +38,7 @@ public class MPGenerator {
         //设置作者名字
         globalConfig.setAuthor("<a href=\"https://github.com/hsczf\">czf</a>");
         //去掉service的I前缀,一般只需要设置service就行
-        globalConfig.setServiceImplName("%sService");
+        globalConfig.setServiceImplName("%sDao");
         autoGenerator.setGlobalConfig(globalConfig);
 
         //包配置
@@ -61,8 +61,13 @@ public class MPGenerator {
         //字段和表注解
         strategyConfig.setEntityTableFieldAnnotationEnable(true);
         //todo 这里修改需要自动生成的表结构
+        /**
+         * 配置需要自动生成的表结构，比如一张表就：“item_config”
+         * 2张表就逗号分隔开，比如："item_config","item_config_detail"
+         */
         strategyConfig.setInclude(
-                "user"
+                "item_config",
+                "user_backpack"
         );
         //自动填充字段,在项目开发过程中,例如创建时间，修改时间,每次，都需要我们来指定，太麻烦了,设置为自动填充规则，就不需要我们赋值咯
         List<TableFill> list = new ArrayList<TableFill>();

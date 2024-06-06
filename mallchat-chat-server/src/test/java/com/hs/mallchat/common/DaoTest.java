@@ -84,7 +84,7 @@ public class DaoTest {
     @Test
     public void testRedis() {
         RedisUtils.set("name", "欧皇大大");
-        String name = RedisUtils.get("name");
+        String name = RedisUtils.getStr("name");
         System.out.println(name);
     }
 
