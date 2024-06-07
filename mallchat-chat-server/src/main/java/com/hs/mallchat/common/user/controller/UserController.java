@@ -5,18 +5,16 @@ import com.hs.mallchat.common.common.domain.dto.RequestInfo;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.interceptor.TokenInterceptor;
 import com.hs.mallchat.common.common.utils.RequestHolder;
+import com.hs.mallchat.common.user.domain.vo.request.ModifyNameByReq;
 import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
 import com.hs.mallchat.common.user.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 /**
  * <p>
@@ -36,10 +34,16 @@ public class UserController {
 
     @GetMapping("/userInfo")
     @ApiOperation("获取用户个人信息")
-    public ApiResult<UserInfoResp> getUserInfo(){
-        RequestInfo requestInfo = RequestHolder.get();
-        System.out.println(requestInfo.getUid());
-        return null;
+    public ApiResult<UserInfoResp> getUserInfo() {
+        return ApiResult.success(userService.getUserInfo(RequestHolder.get().getUid()));
+    }
+
+    @PutMapping("/name")
+    @ApiOperation("修改用户名")
+    public ApiResult<UserInfoResp> modifyName(@Valid @RequestBody ModifyNameByReq req) {
+        // 这里修改名字name长度超出了限制的6抛出了异常，但是没有捕获出来，需要配置一个全局的异常捕获
+        userService.modifyName(RequestHolder.get().getUid(), req.getName());
+        return ApiResult.success();
     }
 
 

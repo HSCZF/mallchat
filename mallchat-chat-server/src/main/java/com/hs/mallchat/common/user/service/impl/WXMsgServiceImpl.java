@@ -112,7 +112,7 @@ public class WXMsgServiceImpl implements WXMsgService {
         }
         // 通过code找到给用户channel进行登录
         Integer code = WAIT_AUTHORIZE_MAP.remove(openId);
-        // todo：这个是大坑啊，没写下面这个webSocket的登录回调，拿不到type:3的数据
+        // 这个是大坑啊，没写下面这个webSocket的登录回调，拿不到type:3的数据
         // 登录了一次，再次点击登录就会空指针错误，因为已经登录成功了，临时保存的WAIT_AUTHORIZE_MAP的code已经移除了
         // 后续在对这个登录链接进行处理，要测验一直登录的话，那换成这个Integer code = WAIT_AUTHORIZE_MAP.get(openId);
         // 后续使用RedisUtils工具类获取

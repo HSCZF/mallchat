@@ -1,5 +1,6 @@
 package com.hs.mallchat.common.common.domain.vo.response;
 
+import com.hs.mallchat.common.common.exception.ErrorEnum;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -64,6 +65,24 @@ public class ApiResult<T> {
         result.setErrMsg(msg);
         return result;
     }
+
+    /**
+     * 该方法用于封装错误信息到ApiResult对象中，以便于前端或调用方识别和处理错误。
+     * 使用泛型T，使得ApiResult可以返回任意类型的data字段，增强了方法的通用性。
+     *
+     * @param error 错误枚举对象，包含错误代码和错误信息。
+     * @param <T> ApiResult中data字段的泛型类型。
+     * @return 返回一个封装了错误信息的ApiResult对象。
+     */
+    public static <T> ApiResult<T> fail(ErrorEnum error) {
+        ApiResult<T> result = new ApiResult<T>();
+        result.setSuccess(Boolean.FALSE);
+        result.setErrCode(error.getErrorCode());
+        result.setErrMsg(error.getErrorMsg());
+        return result;
+    }
+
+
 
     /**
      * 检查当前ApiResult对象是否表示成功。
