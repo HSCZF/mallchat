@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = Throwable.class)
     public ApiResult<?> throwable(Throwable e) {
         // 记录异常信息，以便于问题追踪和诊断。
-        log.error("system exception! The reason is :{}", e.getMessage());
+        log.error("system exception! The reason is :{}", e.getMessage(), e);
         // 返回系统错误码的ApiResult对象，表示操作失败。
         return ApiResult.fail(CommonErrorEnum.SYSTEM_ERROR);
     }

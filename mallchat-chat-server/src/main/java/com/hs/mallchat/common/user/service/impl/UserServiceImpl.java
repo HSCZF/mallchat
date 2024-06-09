@@ -1,9 +1,11 @@
 package com.hs.mallchat.common.user.service.impl;
 
 import com.hs.mallchat.common.common.exception.BusinessException;
+import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.user.dao.UserBackpackDao;
 import com.hs.mallchat.common.user.dao.UserDao;
 import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.entity.UserBackpack;
 import com.hs.mallchat.common.user.domain.enums.ItemEnum;
 import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
 import com.hs.mallchat.common.user.service.UserService;
@@ -35,12 +37,16 @@ public class UserServiceImpl implements UserService {
      * @param uid
      * @param name
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void modifyName(Long uid, String name) {
         User oldUser = userDao.getByName(name);
-        if(Objects.nonNull(oldUser)){
-            // todo 改名
-            throw new BusinessException("改名失败，改名用户名已存在");
+        AssertUtil.isEmpty(oldUser, "改名失败，改名用户名已存在");
+        UserBackpack modifyNameItem = userBackpackDao.getFirstValidItem(uid, ItemEnum.MODIFY_NAME_CARD.getId());
+        AssertUtil.isNotEmpty(modifyNameItem, "改名失败，改名卡不足，等送");
+        boolean success = userBackpackDao.userItem(modifyNameItem);
+        if (success) {
+            userDao.modifyName(uid, name);
         }
     }
 
