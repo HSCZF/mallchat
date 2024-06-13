@@ -2,7 +2,10 @@ package com.hs.mallchat.common.user.service;
 
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.hs.mallchat.common.user.domain.vo.response.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
+
+import java.util.List;
 
 /**
  * <p>
@@ -20,4 +23,8 @@ public interface UserService {
 
     void modifyName(Long uid, String name);
 
+    List<BadgeResp> badges(Long uid);
+
+
+    void wearingBadge(Long uid, Long itemId);
 }

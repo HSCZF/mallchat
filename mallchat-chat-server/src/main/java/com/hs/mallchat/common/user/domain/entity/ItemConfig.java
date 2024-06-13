@@ -2,8 +2,11 @@ package com.hs.mallchat.common.user.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableId;
+
 import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.TableField;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -28,7 +31,7 @@ public class ItemConfig implements Serializable {
     /**
      * id
      */
-      @TableId("id")
+    @TableId("id")
     private Long id;
 
     /**
@@ -45,8 +48,9 @@ public class ItemConfig implements Serializable {
 
     /**
      * 物品功能描述
+     * 这里item_config表的describe是一个关键字，需要在实体类修改，加个反引号``
      */
-    @TableField("describe")
+    @TableField("`describe`")
     private String describe;
 
     /**

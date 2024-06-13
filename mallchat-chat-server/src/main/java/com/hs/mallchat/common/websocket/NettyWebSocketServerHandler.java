@@ -100,7 +100,7 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
             case AUTHORIZE:
                 // {
                 //    "type":3,
-                //    "data": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1aWQiOjIwMDIxLCJjcmVhdGVUaW1lIjoxNzE3NDk4ODc1fQ.jHcHMbhsyoxbESfikpmxMAhLtrlqPyKIVVn8a2wQHeg"
+                //    "data": "你的token值"
                 // }
                 // 去连接认证拿到token，在断开在连接输入这个
                 webSocketService.authorize(ctx.channel(), wsBaseReq.getData());

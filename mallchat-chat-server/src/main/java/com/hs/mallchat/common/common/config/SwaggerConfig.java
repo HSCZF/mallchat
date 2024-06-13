@@ -1,4 +1,4 @@
-package com.hs.mallchat.common.user.config;
+package com.hs.mallchat.common.common.config;
 
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.CorsEndpointProperties;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;

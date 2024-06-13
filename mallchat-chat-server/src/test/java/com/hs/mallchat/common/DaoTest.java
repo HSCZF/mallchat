@@ -4,6 +4,9 @@ import com.hs.mallchat.common.common.utils.JwtUtils;
 import com.hs.mallchat.common.common.utils.RedisUtils;
 import com.hs.mallchat.common.user.dao.UserDao;
 import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.enums.IdempotentEnum;
+import com.hs.mallchat.common.user.domain.enums.ItemEnum;
+import com.hs.mallchat.common.user.service.IUserBackpackService;
 import com.hs.mallchat.common.user.service.LoginService;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
@@ -11,16 +14,13 @@ import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Objects;
-import java.util.concurrent.locks.Lock;
+import java.rmi.server.UID;
 
 /**
  * @Author: CZF
@@ -31,6 +31,8 @@ import java.util.concurrent.locks.Lock;
 @SpringBootTest
 @RunWith(SpringRunner.class)
 public class DaoTest {
+
+    private static final long UID = 20021l;
 
     @Autowired
     private UserDao userDao;
@@ -44,6 +46,13 @@ public class DaoTest {
     private LoginService loginService;
     @Autowired
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Autowired
+    private IUserBackpackService iUserBackpackService;
+
+    @Test
+    public void testAcquireItemRedisson() {
+        iUserBackpackService.acquireItem(UID, ItemEnum.PLANET.getId(), IdempotentEnum.UID, UID + "");
+    }
 
     @Test
     public void test() {
@@ -59,13 +68,6 @@ public class DaoTest {
         System.out.println(user2);
         boolean save = userDao.save(user);
         System.out.println(save);
-    }
-
-    @Test
-    public void testWxService() throws WxErrorException {
-        WxMpQrCodeTicket wxMpQrCodeTicket = wxMpService.getQrcodeService().qrCodeCreateTmpTicket(1, 1000);
-        String url = wxMpQrCodeTicket.getUrl();
-        System.out.println(url);
     }
 
     @Test
@@ -89,6 +91,18 @@ public class DaoTest {
     }
 
     @Test
+    public void thread() throws InterruptedException {
+        // 测试自定义线程池的异常捕获
+        threadPoolTaskExecutor.execute(() -> {
+            if (1 == 1) {
+                log.error("12345");
+                throw new RuntimeException("12345678");
+            }
+        });
+        Thread.sleep(300);
+    }
+
+    @Test
     public void testRedis2() {
         String s = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1aWQiOjIwMDIxLCJjcmVhdGVUaW1lIjoxNzE3Mzg2NDQ5fQ.p_ckZOxGT_ZUUo5vwB7LJs-QRid-xINsf-Hcf3wzH_E";
         Long uid = loginService.getValidUid(s);
@@ -96,15 +110,10 @@ public class DaoTest {
     }
 
     @Test
-    public void thread() throws InterruptedException {
-        // 测试自定义线程池的异常捕获
-        threadPoolTaskExecutor.execute(() -> {
-        if (1 == 1) {
-            log.error("12345");
-            throw new RuntimeException("12345678");
-        }
-        });
-        Thread.sleep(300);
+    public void testWxService() throws WxErrorException {
+        WxMpQrCodeTicket wxMpQrCodeTicket = wxMpService.getQrcodeService().qrCodeCreateTmpTicket(1, 1000);
+        String url = wxMpQrCodeTicket.getUrl();
+        System.out.println(url);
     }
 
 }
