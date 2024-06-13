@@ -1,5 +1,6 @@
 package com.hs.mallchat.common.user.service.impl;
 
+import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.exception.BusinessException;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.user.dao.ItemConfigDao;
@@ -87,6 +88,7 @@ public class UserServiceImpl implements UserService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @RedissonLock(key = "#uid")
     public void modifyName(Long uid, String name) {
         User oldUser = userDao.getByName(name);
         AssertUtil.isEmpty(oldUser, "改名失败，改名用户名已存在");
