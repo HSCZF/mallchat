@@ -1,7 +1,7 @@
 package com.hs.mallchat.common.user.service.impl;
 
 import com.hs.mallchat.common.common.annotation.RedissonLock;
-import com.hs.mallchat.common.common.exception.BusinessException;
+import com.hs.mallchat.common.common.event.UserRegisterEvent;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.user.dao.ItemConfigDao;
 import com.hs.mallchat.common.user.dao.UserBackpackDao;
@@ -18,12 +18,12 @@ import com.hs.mallchat.common.user.service.adapter.UserAdapter;
 import com.hs.mallchat.common.user.service.cache.ItemCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springfox.documentation.annotations.Cacheable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -36,15 +36,30 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserDao userDao;
-
     @Autowired
     private UserBackpackDao userBackpackDao;
-
     @Autowired
     private ItemCache itemCache;
-
     @Autowired
     private ItemConfigDao itemConfigDao;
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
+
+    /**
+     * 用户注册，开个事务
+     *
+     * @param insert
+     * @return
+     */
+    @Override
+    @Transactional
+    public Long registered(User insert) {
+        userDao.save(insert);
+        // 用户注册的事件
+        applicationEventPublisher.publishEvent(new UserRegisterEvent(this, insert));
+        return insert.getId();
+    }
 
     @Override
     public void wearingBadge(Long uid, Long itemId) {
@@ -53,7 +68,7 @@ public class UserServiceImpl implements UserService {
         AssertUtil.isNotEmpty(firstValidItem, "您还没有徽章，快去获得吧！");
         // 确保这物品是徽章
         ItemConfig itemConfig = itemConfigDao.getById(firstValidItem.getItemId());
-        AssertUtil.equal(itemConfig.getType(),ItemTypeEnum.BADGE.getType(),"只有徽章才能佩戴！");
+        AssertUtil.equal(itemConfig.getType(), ItemTypeEnum.BADGE.getType(), "只有徽章才能佩戴！");
         // 佩戴徽章
         userDao.wearingBadge(uid, itemId);
     }
@@ -113,17 +128,5 @@ public class UserServiceImpl implements UserService {
         return UserAdapter.buildUserInfo(user, modifyNameCount);
     }
 
-    /**
-     * 开个事务
-     *
-     * @param insert
-     * @return
-     */
-    @Override
-    @Transactional
-    public Long registered(User insert) {
-        boolean save = userDao.save(insert);
-        // 用户注册的事件
-        return insert.getId();
-    }
+
 }
