@@ -15,6 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 /**
  * 用户注册事件监听器，负责在用户注册后异步执行一系列操作，
  * 如发放更名卡、特殊注册徽章等，以增强用户体验并记录用户成就。
+ * @author CZF
  */
 @Component
 public class UserRegisterListener {

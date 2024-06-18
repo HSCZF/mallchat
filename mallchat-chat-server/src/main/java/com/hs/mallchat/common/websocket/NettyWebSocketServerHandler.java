@@ -66,6 +66,12 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
         }
     }
 
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.error("异常发生，关闭连接,exceptionCaught:{}", cause);
+        super.exceptionCaught(ctx, cause);
+    }
+
     /**
      * 用户下线，统一处理
      *
@@ -87,7 +93,6 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         userOffLine(ctx.channel());
     }
-
 
 
     @Override

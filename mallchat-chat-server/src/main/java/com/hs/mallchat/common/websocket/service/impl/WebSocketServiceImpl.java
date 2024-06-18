@@ -4,9 +4,12 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.hs.mallchat.common.common.event.UserOnlineEvent;
 import com.hs.mallchat.common.user.dao.UserDao;
+import com.hs.mallchat.common.user.domain.entity.IpInfo;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.service.LoginService;
+import com.hs.mallchat.common.websocket.NettyUtil;
 import com.hs.mallchat.common.websocket.domain.dto.WSChannelExtraDTO;
 import com.hs.mallchat.common.websocket.domain.vo.response.WSBaseResp;
 import com.hs.mallchat.common.websocket.domain.vo.response.WSLoginUrl;
@@ -19,10 +22,12 @@ import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,12 +42,12 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Autowired
     @Lazy
     private WxMpService wxMpService;
-
     @Autowired
     private UserDao userDao;
-
     @Autowired
     private LoginService loginService;
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 管理所有在线用户的连接，包括登录态和游客
@@ -76,7 +81,7 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Override
     public void handleLoginReq(Channel channel) {
         // 生成随机二维码
-        Integer code = generateloginCode(channel);
+        Integer code = generateLoginCode(channel);
         // 找微信申请带参二维码
         WxMpQrCodeTicket wxMpQrCodeTicket = wxMpService.getQrcodeService().qrCodeCreateTmpTicket(code, (int) DURATION.getSeconds());
         // 把二维码推送给前端
@@ -140,13 +145,20 @@ public class WebSocketServiceImpl implements WebSocketService {
         wsChannelExtraDTO.setUid(user.getId());
         // 推送成功消息，用户上线成功的事件
         sendMsg(channel, WebSocketAdapter.buildLoginSuccessResp(user, token));
+        // 用户上线成功的事件
+        user.setLastOptTime(new Date());
+        // user实体类@TableName("user"),加入autoResultMap = true
+        // ip_info上加入typeHandler = JacksonTypeHandler.class，可以反序列化拿到json格式的ip
+        IpInfo ipInfo = new IpInfo();
+        user.refreshIp(NettyUtil.getAttr(channel, NettyUtil.IP));
+        applicationEventPublisher.publishEvent(new UserOnlineEvent(this, user));
     }
 
     private void sendMsg(Channel channel, WSBaseResp<?> resp) {
         channel.writeAndFlush(new TextWebSocketFrame(JSONUtil.toJsonStr(resp)));
     }
 
-    private Integer generateloginCode(Channel channel) {
+    private Integer generateLoginCode(Channel channel) {
         Integer code;
         do {
             code = RandomUtil.randomInt(Integer.MAX_VALUE);
