@@ -8,11 +8,12 @@ import com.hs.mallchat.common.common.event.UserOnlineEvent;
 import com.hs.mallchat.common.user.dao.UserDao;
 import com.hs.mallchat.common.user.domain.entity.IpInfo;
 import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.enums.RoleEnum;
+import com.hs.mallchat.common.user.service.IRoleService;
 import com.hs.mallchat.common.user.service.LoginService;
 import com.hs.mallchat.common.websocket.NettyUtil;
 import com.hs.mallchat.common.websocket.domain.dto.WSChannelExtraDTO;
 import com.hs.mallchat.common.websocket.domain.vo.response.WSBaseResp;
-import com.hs.mallchat.common.websocket.domain.vo.response.WSLoginUrl;
 import com.hs.mallchat.common.websocket.service.WebSocketService;
 import com.hs.mallchat.common.websocket.service.adapter.WebSocketAdapter;
 import io.netty.channel.Channel;
@@ -20,16 +21,17 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.SneakyThrows;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @Author: CZF
@@ -48,6 +50,10 @@ public class WebSocketServiceImpl implements WebSocketService {
     private LoginService loginService;
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
+    @Autowired
+    private IRoleService iRoleService;
+    @Autowired
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     /**
      * 管理所有在线用户的连接，包括登录态和游客
@@ -116,7 +122,7 @@ public class WebSocketServiceImpl implements WebSocketService {
         // 调用登录模块获取token
         String token = loginService.login(uid);
         // 用户登录
-        sendMsg(channel, WebSocketAdapter.buildLoginSuccessResp(user, token));
+        loginSuccess(channel, user, token);
     }
 
     @Override
@@ -127,6 +133,7 @@ public class WebSocketServiceImpl implements WebSocketService {
         }
         sendMsg(channel, WebSocketAdapter.buildScanSuccessResp());
     }
+
 
     @Override
     public void authorize(Channel channel, String token) {
@@ -139,17 +146,26 @@ public class WebSocketServiceImpl implements WebSocketService {
         }
     }
 
+    @Override
+    public void sendMsgToAll(WSBaseResp<?> msg) {
+        ONLINE_WS_MAP.forEach((channel, ext) -> {
+            threadPoolTaskExecutor.execute(() -> {
+                sendMsg(channel, msg);
+            });
+        });
+    }
+
+
     private void loginSuccess(Channel channel, User user, String token) {
         // 保存channel的对应id
         WSChannelExtraDTO wsChannelExtraDTO = ONLINE_WS_MAP.get(channel);
         wsChannelExtraDTO.setUid(user.getId());
         // 推送成功消息，用户上线成功的事件
-        sendMsg(channel, WebSocketAdapter.buildLoginSuccessResp(user, token));
+        sendMsg(channel, WebSocketAdapter.buildLoginSuccessResp(user, token, iRoleService.hasPower(user.getId(), RoleEnum.CHAT_MANAGER)));
         // 用户上线成功的事件
         user.setLastOptTime(new Date());
         // user实体类@TableName("user"),加入autoResultMap = true
         // ip_info上加入typeHandler = JacksonTypeHandler.class，可以反序列化拿到json格式的ip
-        IpInfo ipInfo = new IpInfo();
         user.refreshIp(NettyUtil.getAttr(channel, NettyUtil.IP));
         applicationEventPublisher.publishEvent(new UserOnlineEvent(this, user));
     }

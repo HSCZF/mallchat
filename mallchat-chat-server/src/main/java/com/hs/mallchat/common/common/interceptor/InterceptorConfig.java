@@ -17,9 +17,10 @@ public class InterceptorConfig implements WebMvcConfigurer {
 
     @Autowired
     private TokenInterceptor tokenInterceptor;
-
     @Autowired
     private CollectorInterceptor collectorInterceptor;
+    @Autowired
+    private BlackInterceptor blackInterceptor;
 
     /**
      * 添加拦截器到拦截器注册表中并设定拦截顺序。
@@ -32,6 +33,8 @@ public class InterceptorConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 注意：拦截器执行顺序遵循注册顺序，更改顺序可能影响安全性和性能监控的准确性。
+
         // 首先添加token拦截器，此拦截器应优先执行，负责验证请求携带的token有效性，
         // 确保请求具有访问资源所需的授权。未通过此拦截将不会进入后续处理。
         registry.addInterceptor(tokenInterceptor)
@@ -42,7 +45,10 @@ public class InterceptorConfig implements WebMvcConfigurer {
         registry.addInterceptor(collectorInterceptor)
                 .addPathPatterns("/capi/**");
 
-        // 注意：拦截器执行顺序遵循注册顺序，更改顺序可能影响安全性和性能监控的准确性。
+        // 黑名单拦截器，所有在黑名单列表里的都不能访问
+        registry.addInterceptor(blackInterceptor)
+                .addPathPatterns("/capi/**");
+
     }
 
 

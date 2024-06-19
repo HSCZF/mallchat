@@ -1,5 +1,6 @@
 package com.hs.mallchat.common.user.dao;
 
+import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.mapper.UserMapper;
 import com.hs.mallchat.common.user.service.UserService;
@@ -39,8 +40,16 @@ public class UserDao extends ServiceImpl<UserMapper, User> {
     public void wearingBadge(Long uid, Long itemId) {
 
         lambdaUpdate()
-                .eq(User::getId,uid)
-                .set(User::getItemId,itemId)
+                .eq(User::getId, uid)
+                .set(User::getItemId, itemId)
                 .update();
+    }
+
+    public void invalidUid(Long id) {
+        lambdaUpdate()
+                .eq(User::getId, id)
+                .set(User::getStatus, YerOrNoEnum.YES.getStatus())
+                .update();
+
     }
 }

@@ -4,12 +4,16 @@ package com.hs.mallchat.common.user.controller;
 import com.hs.mallchat.common.common.domain.dto.RequestInfo;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.interceptor.TokenInterceptor;
+import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.common.utils.RequestHolder;
 import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.enums.RoleEnum;
+import com.hs.mallchat.common.user.domain.vo.request.BlackReq;
 import com.hs.mallchat.common.user.domain.vo.request.ModifyNameByReq;
 import com.hs.mallchat.common.user.domain.vo.request.WearingBadgeReq;
 import com.hs.mallchat.common.user.domain.vo.response.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
+import com.hs.mallchat.common.user.service.IRoleService;
 import com.hs.mallchat.common.user.service.UserService;
 import com.hs.mallchat.common.user.service.adapter.UserAdapter;
 import io.swagger.annotations.Api;
@@ -36,6 +40,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private IRoleService iRoleService;
 
     @GetMapping("/userInfo")
     @ApiOperation("获取用户个人信息")
@@ -73,7 +79,19 @@ public class UserController {
     public ApiResult<Map<String, Object>> wearingBadge(@Valid @RequestBody WearingBadgeReq req) {
         userService.wearingBadge(RequestHolder.get().getUid(), req.getItemId());
         Map<String, Object> exchange = new HashMap<>();
-        exchange.put("exchange","更换成功");
+        exchange.put("exchange", "更换成功");
+        return ApiResult.success(exchange);
+    }
+
+    @PutMapping("/black")
+    @ApiOperation("拉黑用户")
+    public ApiResult<Map<String, Object>> black(@Valid @RequestBody BlackReq req) {
+        Long uid = RequestHolder.get().getUid();
+        boolean hasPower = iRoleService.hasPower(uid, RoleEnum.ADMIN);
+        AssertUtil.isTrue(hasPower, "抹茶管理员没有权限");
+        userService.black(req);
+        Map<String, Object> exchange = new HashMap<>();
+        exchange.put("exchangeBlack", "拉黑成功");
         return ApiResult.success(exchange);
     }
 
