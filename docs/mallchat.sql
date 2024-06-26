@@ -213,7 +213,8 @@ CREATE TABLE `user_friend` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_uid_friend_uid` (`uid`,`friend_uid`) USING BTREE,
   KEY `idx_create_time` (`create_time`) USING BTREE,
-  KEY `idx_update_time` (`update_time`) USING BTREE
+  KEY `idx_update_time` (`update_time`) USING BTREE,
+  KEY `idx_uid` (`uid`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户联系人表';
 DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room` (

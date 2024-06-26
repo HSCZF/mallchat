@@ -38,7 +38,7 @@ public class CursorPageBaseResp<T> {
      * @param <T>        泛型类型
      * @return 初始化后的CursorPageBaseResp对象。
      */
-    public static <T> CursorPageBaseResp<T> init(CursorPageBaseResp<T> cursorPage, List<T> list) {
+    public static <T> CursorPageBaseResp<T> init(CursorPageBaseResp cursorPage, List<T> list) {
         CursorPageBaseResp<T> cursorPageBaseResp = new CursorPageBaseResp<T>();
         cursorPageBaseResp.setIsLast(cursorPage.getIsLast());
         cursorPageBaseResp.setList(list);

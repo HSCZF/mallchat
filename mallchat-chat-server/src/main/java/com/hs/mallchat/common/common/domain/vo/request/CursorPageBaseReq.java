@@ -1,6 +1,6 @@
 package com.hs.mallchat.common.common.domain.vo.request;
 
-import cn.hutool.db.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -35,7 +35,7 @@ public class CursorPageBaseReq {
      * @return 一个新的分页对象 {@link Page} 实例。
      */
     public Page plusPage() {
-        return new Page(1, this.pageSize);
+        return new Page(1, this.pageSize, false);
     }
 
     /**

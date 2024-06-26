@@ -1,12 +1,9 @@
 package com.hs.mallchat.common.user.controller;
 
 
-import com.hs.mallchat.common.common.domain.dto.RequestInfo;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
-import com.hs.mallchat.common.common.interceptor.TokenInterceptor;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.common.utils.RequestHolder;
-import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.domain.enums.RoleEnum;
 import com.hs.mallchat.common.user.domain.vo.request.BlackReq;
 import com.hs.mallchat.common.user.domain.vo.request.ModifyNameByReq;
@@ -15,13 +12,11 @@ import com.hs.mallchat.common.user.domain.vo.response.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
 import com.hs.mallchat.common.user.service.IRoleService;
 import com.hs.mallchat.common.user.service.UserService;
-import com.hs.mallchat.common.user.service.adapter.UserAdapter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.*;
 
@@ -59,14 +54,13 @@ public class UserController {
 
     /**
      * 这里item_config表的describe是一个关键字，需要在实体类修改，加个反引号``
-     * SELECT  id,type,img,describe,create_time,update_time  FROM item_config WHERE type = 2
+     * SELECT  id ,type,img,describe,create_time,update_time  FROM item_config WHERE type = 2
      * 出现bug：[Err] 1064 - You have an error in your SQL syntax;
      * check the manual that corresponds to your MySQL server version for the right syntax to use near 'describe,create_time,update_time  FROM item_config WHERE type = 2' at line 1
      * * 1. 错误原因：describe是关键字，不能作为字段名
      * * 2. 解决方案：使用别名，加个反引号``, @TableField("`describe`")
      * * SELECT  id,type,img,`describe`,create_time,update_time  FROM item_config WHERE type = 2
      *
-     * @return
      */
     @GetMapping("/badges")
     @ApiOperation("可选徽章预览")
