@@ -100,7 +100,7 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
         String text = msg.text();
         // 拿到text，反序列化
         WSBaseReq wsBaseReq = JSONUtil.toBean(text, WSBaseReq.class);
-        System.out.println("channelRead0拿到的text反序列化数据：" + wsBaseReq.toString());
+       // System.out.println("channelRead0拿到的text反序列化数据：" + wsBaseReq.toString());
         switch (WSReqTypeEnum.of(wsBaseReq.getType())) {
             case AUTHORIZE:
                 // {

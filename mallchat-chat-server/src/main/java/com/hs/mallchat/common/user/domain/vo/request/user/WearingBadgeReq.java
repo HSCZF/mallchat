@@ -1,4 +1,4 @@
-package com.hs.mallchat.common.user.domain.vo.request;
+package com.hs.mallchat.common.user.domain.vo.request.user;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -9,14 +9,14 @@ import javax.validation.constraints.NotNull;
 
 /**
  * @Author: CZF
- * @Create: 2024/6/18 - 11:40
+ * @Create: 2024/6/9 - 18:10
  * Description:
  */
 @Data
-public class BlackReq {
+public class WearingBadgeReq {
 
-    @ApiModelProperty("拉黑用户的uid")
+    @ApiModelProperty("徽章id")
     @NotNull
-    private Long uid;
+    private Long itemId;
 
 }

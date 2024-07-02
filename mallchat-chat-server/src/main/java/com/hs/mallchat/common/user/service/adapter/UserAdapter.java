@@ -1,14 +1,11 @@
 package com.hs.mallchat.common.user.service.adapter;
 
-import com.hs.mallchat.common.common.domain.dto.RequestInfo;
 import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
-import com.hs.mallchat.common.common.utils.RequestHolder;
 import com.hs.mallchat.common.user.domain.entity.ItemConfig;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.domain.entity.UserBackpack;
-import com.hs.mallchat.common.user.domain.vo.response.BadgeResp;
-import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
-import jodd.bean.BeanUtil;
+import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
+import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.springframework.beans.BeanUtils;
 

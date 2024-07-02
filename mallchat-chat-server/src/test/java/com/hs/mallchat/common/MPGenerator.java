@@ -43,7 +43,7 @@ public class MPGenerator {
 
         //包配置
         PackageConfig packageConfig = new PackageConfig();
-        packageConfig.setParent("com.hs.mallchat.common.user");//自定义包的路径
+        packageConfig.setParent("com.hs.mallchat.common.chat");//自定义包的路径
         packageConfig.setEntity("domain.entity");
         packageConfig.setMapper("mapper");
         packageConfig.setController("controller");
@@ -66,8 +66,7 @@ public class MPGenerator {
          * 2张表就逗号分隔开，比如："item_config","item_config_detail"
          */
         strategyConfig.setInclude(
-                "user_apply",
-                "user_friend"
+                "room_friend"
         );
         //自动填充字段,在项目开发过程中,例如创建时间，修改时间,每次，都需要我们来指定，太麻烦了,设置为自动填充规则，就不需要我们赋值咯
         List<TableFill> list = new ArrayList<TableFill>();

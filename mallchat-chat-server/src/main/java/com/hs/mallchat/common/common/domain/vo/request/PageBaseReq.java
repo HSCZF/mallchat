@@ -1,6 +1,6 @@
 package com.hs.mallchat.common.common.domain.vo.request;
 
-import cn.hutool.db.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -27,7 +27,6 @@ public class PageBaseReq {
     /**
      * 获取mybatisPlus的page
      *
-     * @return
      */
     public Page plusPage() {
         return new Page(pageNo, pageSize);

@@ -1,0 +1,26 @@
+package com.hs.mallchat.common.user.domain.vo.request.friend;
+
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotNull;
+
+/**
+ * @Author: CZF
+ * @Create: 2024/7/2 - 9:51
+ * Description: 申请好友信息
+ */
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class FriendDeleteReq {
+
+    @NotNull
+    @ApiModelProperty("好友uid")
+    private Long targetUid;
+
+}

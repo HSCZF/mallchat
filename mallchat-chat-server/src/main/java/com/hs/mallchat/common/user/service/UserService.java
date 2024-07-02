@@ -1,11 +1,9 @@
 package com.hs.mallchat.common.user.service;
 
 import com.hs.mallchat.common.user.domain.entity.User;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.hs.mallchat.common.user.domain.vo.request.BlackReq;
-import com.hs.mallchat.common.user.domain.vo.request.WearingBadgeReq;
-import com.hs.mallchat.common.user.domain.vo.response.BadgeResp;
-import com.hs.mallchat.common.user.domain.vo.response.UserInfoResp;
+import com.hs.mallchat.common.user.domain.vo.request.user.BlackReq;
+import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
+import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
 
 import java.util.List;
 

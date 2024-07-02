@@ -1,7 +1,9 @@
 package com.hs.mallchat.common.user.service.adapter;
 
 import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.entity.UserApply;
 import com.hs.mallchat.common.user.domain.entity.UserFriend;
+import com.hs.mallchat.common.user.domain.vo.response.friend.FriendApplyResp;
 import com.hs.mallchat.common.user.domain.vo.response.friend.FriendResp;
 
 import java.util.List;
@@ -27,8 +29,24 @@ public class FriendAdapter {
             User user = userMap.get(userFriend.getFriendUid());
             if (Objects.nonNull(user)) {
                 resp.setActiveStatus(user.getActiveStatus());
+                resp.setName(user.getName());
+                resp.setAvatar(user.getAvatar());
             }
             return resp;
         }).collect(Collectors.toList());
+    }
+
+    public static List<FriendApplyResp> buildFriendApplyList(List<UserApply> records) {
+
+        return records.stream().map(userApply -> {
+            FriendApplyResp friendApplyResp = new FriendApplyResp();
+            friendApplyResp.setUid(userApply.getUid());
+            friendApplyResp.setType(userApply.getType());
+            friendApplyResp.setApplyId(userApply.getId());
+            friendApplyResp.setMsg(userApply.getMsg());
+            friendApplyResp.setStatus(userApply.getStatus());
+            return friendApplyResp;
+        }).collect(Collectors.toList());
+
     }
 }

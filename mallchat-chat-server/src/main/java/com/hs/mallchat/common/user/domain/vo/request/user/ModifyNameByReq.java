@@ -1,4 +1,4 @@
-package com.hs.mallchat.common.user.domain.vo.request;
+package com.hs.mallchat.common.user.domain.vo.request.user;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

@@ -32,7 +32,7 @@ import java.rmi.server.UID;
 @RunWith(SpringRunner.class)
 public class DaoTest {
 
-    private static final long UID = 20023L;
+    private static final long UID = 20022L;
 
     @Autowired
     private UserDao userDao;
