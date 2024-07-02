@@ -51,7 +51,7 @@ public class FriendController {
         return ApiResult.success(friendService.friendList(uid, request));
     }
 
-    @GetMapping("/apply")
+    @PostMapping("/apply")
     @ApiOperation("申请好友")
     public ApiResult<Void> apply(@Valid @RequestBody FriendApplyReq request) {
         Long uid = RequestHolder.get().getUid();
@@ -73,7 +73,7 @@ public class FriendController {
         return ApiResult.success(friendService.unread(uid));
     }
 
-    @GetMapping("/apply")
+    @PutMapping("/apply")
     @ApiOperation("审批同意")
     public ApiResult<Void> applyApprove(@Valid @RequestBody FriendApproveReq request) {
         Long uid = RequestHolder.get().getUid();
