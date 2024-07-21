@@ -8,6 +8,7 @@ import com.hs.mallchat.common.user.dao.BlackDao;
 import com.hs.mallchat.common.user.dao.ItemConfigDao;
 import com.hs.mallchat.common.user.dao.UserBackpackDao;
 import com.hs.mallchat.common.user.dao.UserDao;
+import com.hs.mallchat.common.user.domain.dto.SummeryInfoDTO;
 import com.hs.mallchat.common.user.domain.entity.Black;
 import com.hs.mallchat.common.user.domain.entity.ItemConfig;
 import com.hs.mallchat.common.user.domain.entity.User;
@@ -16,11 +17,14 @@ import com.hs.mallchat.common.user.domain.enums.BlackTypeEnum;
 import com.hs.mallchat.common.user.domain.enums.ItemEnum;
 import com.hs.mallchat.common.user.domain.enums.ItemTypeEnum;
 import com.hs.mallchat.common.user.domain.vo.request.user.BlackReq;
+import com.hs.mallchat.common.user.domain.vo.request.user.SummeryInfoReq;
 import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
 import com.hs.mallchat.common.user.service.UserService;
 import com.hs.mallchat.common.user.service.adapter.UserAdapter;
 import com.hs.mallchat.common.user.service.cache.ItemCache;
+import com.hs.mallchat.common.user.service.cache.UserCache;
+import com.hs.mallchat.common.user.service.cache.UserSummaryCache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +33,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springfox.documentation.annotations.Cacheable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +53,10 @@ public class UserServiceImpl implements UserService {
     private UserBackpackDao userBackpackDao;
     @Autowired
     private ItemCache itemCache;
+    @Autowired
+    private UserCache userCache;
+    @Autowired
+    private UserSummaryCache userSummaryCache;
     @Autowired
     private ItemConfigDao itemConfigDao;
     @Autowired
@@ -93,6 +104,41 @@ public class UserServiceImpl implements UserService {
         blackIp(byId.getIpInfo().getCreateIp());
         blackIp(byId.getIpInfo().getUpdateIp());
         applicationEventPublisher.publishEvent(new UserBlackEvent(this, byId));
+    }
+
+    /**
+     * 获取用户汇总信息
+     *
+     * @param req
+     */
+    @Override
+    public List<SummeryInfoDTO> getSummeryUserInfo(SummeryInfoReq req) {
+        //需要前端同步的uid
+        List<Long> uidList = getNeedSyncUidList(req.getReqList());
+        //加载用户信息
+        Map<Long, SummeryInfoDTO> batch = userSummaryCache.getBatch(uidList);
+        return req.getReqList()
+                .stream()
+                .map(a -> batch.containsKey(a.getUid()) ? batch.get(a.getUid()) : SummeryInfoDTO.skip(a.getUid()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private List<Long> getNeedSyncUidList(List<SummeryInfoReq.infoReq> reqList) {
+        List<Long> needSyncUidList = new ArrayList<>();
+        List<Long> userModifyTime = userCache.getUserModifyTime(
+                reqList.stream()
+                        .map(SummeryInfoReq.infoReq::getUid)
+                        .collect(Collectors.toList())
+        );
+        for (int i = 0; i < reqList.size(); i++) {
+            SummeryInfoReq.infoReq infoReq = reqList.get(i);
+            Long modifyTime = userModifyTime.get(i);
+            if (Objects.isNull(infoReq.getLastModifyTime()) || (Objects.nonNull(modifyTime) && modifyTime > infoReq.getLastModifyTime())) {
+                needSyncUidList.add(infoReq.getUid());
+            }
+        }
+        return needSyncUidList;
     }
 
     private void blackIp(String ip) {

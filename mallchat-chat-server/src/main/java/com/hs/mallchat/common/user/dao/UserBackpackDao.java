@@ -1,9 +1,8 @@
 package com.hs.mallchat.common.user.dao;
 
-import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
+import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.user.domain.entity.UserBackpack;
 import com.hs.mallchat.common.user.mapper.UserBackpackMapper;
-import com.hs.mallchat.common.user.service.IUserBackpackService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +23,7 @@ public class UserBackpackDao extends ServiceImpl<UserBackpackMapper, UserBackpac
         return lambdaQuery()
                 .eq(UserBackpack::getUid, uid)
                 .eq(UserBackpack::getItemId, itemId)
-                .eq(UserBackpack::getStatus, YerOrNoEnum.NO.getStatus())
+                .eq(UserBackpack::getStatus, YesOrNoEnum.NO.getStatus())
                 .count();
     }
 
@@ -33,7 +32,7 @@ public class UserBackpackDao extends ServiceImpl<UserBackpackMapper, UserBackpac
         return lambdaQuery()
                 .eq(UserBackpack::getUid, uid)
                 .eq(UserBackpack::getItemId, itemId)
-                .eq(UserBackpack::getStatus, YerOrNoEnum.NO.getStatus())
+                .eq(UserBackpack::getStatus, YesOrNoEnum.NO.getStatus())
                 .orderByAsc(UserBackpack::getId)
                 .last("limit 1")
                 .one();
@@ -44,19 +43,27 @@ public class UserBackpackDao extends ServiceImpl<UserBackpackMapper, UserBackpac
 
         return lambdaUpdate()
                 .eq(UserBackpack::getId, modifyNameItem.getId())
-                .eq(UserBackpack::getStatus, YerOrNoEnum.NO.getStatus())
-                .set(UserBackpack::getStatus, YerOrNoEnum.YES.getStatus())
+                .eq(UserBackpack::getStatus, YesOrNoEnum.NO.getStatus())
+                .set(UserBackpack::getStatus, YesOrNoEnum.YES.getStatus())
                 .update();
 
 
     }
 
-    public List<UserBackpack> getByItemIds(Long uid, List<Long> itemId) {
+    public List<UserBackpack> getByItemIds(Long uid, List<Long> itemIds) {
 
         return lambdaQuery()
                 .eq(UserBackpack::getUid, uid)
-                .eq(UserBackpack::getStatus, YerOrNoEnum.NO.getStatus())
-                .in(UserBackpack::getItemId, itemId)
+                .eq(UserBackpack::getStatus, YesOrNoEnum.NO.getStatus())
+                .in(UserBackpack::getItemId, itemIds)
+                .list();
+
+    }
+    public List<UserBackpack> getByItemIds(List<Long> uids, List<Long> itemIds) {
+
+        return lambdaQuery().in(UserBackpack::getUid, uids)
+                .in(UserBackpack::getItemId, itemIds)
+                .eq(UserBackpack::getStatus, YesOrNoEnum.NO.getStatus())
                 .list();
 
     }

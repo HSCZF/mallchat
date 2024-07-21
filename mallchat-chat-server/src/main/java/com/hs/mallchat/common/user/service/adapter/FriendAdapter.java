@@ -29,15 +29,12 @@ public class FriendAdapter {
             User user = userMap.get(userFriend.getFriendUid());
             if (Objects.nonNull(user)) {
                 resp.setActiveStatus(user.getActiveStatus());
-                resp.setName(user.getName());
-                resp.setAvatar(user.getAvatar());
             }
             return resp;
         }).collect(Collectors.toList());
     }
 
     public static List<FriendApplyResp> buildFriendApplyList(List<UserApply> records) {
-
         return records.stream().map(userApply -> {
             FriendApplyResp friendApplyResp = new FriendApplyResp();
             friendApplyResp.setUid(userApply.getUid());
@@ -47,6 +44,5 @@ public class FriendAdapter {
             friendApplyResp.setStatus(userApply.getStatus());
             return friendApplyResp;
         }).collect(Collectors.toList());
-
     }
 }

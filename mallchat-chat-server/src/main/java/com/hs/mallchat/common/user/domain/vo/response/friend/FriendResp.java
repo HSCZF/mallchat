@@ -20,11 +20,6 @@ public class FriendResp {
 
     @ApiModelProperty("好友uid")
     private Long uid;
-    @ApiModelProperty("名称")
-    private String name;
-    @ApiModelProperty("头像")
-    private String avatar;
-
     /**
      * @see com.hs.mallchat.common.user.domain.enums.ChatActiveStatusEnum
      */

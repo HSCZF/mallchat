@@ -1,6 +1,6 @@
 package com.hs.mallchat.common.websocket.service.adapter;
 
-import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
+import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.websocket.domain.enums.WSRespTypeEnum;
 import com.hs.mallchat.common.websocket.domain.vo.response.*;
@@ -58,7 +58,7 @@ public class WebSocketAdapter {
                 .name(user.getName())
                 .token(code)
                 .uid(user.getId())
-                .power(power ? YerOrNoEnum.YES.getStatus() : YerOrNoEnum.NO.getStatus())
+                .power(power ? YesOrNoEnum.YES.getStatus() : YesOrNoEnum.NO.getStatus())
                 .build();
         resp.setData(build);
         return resp;

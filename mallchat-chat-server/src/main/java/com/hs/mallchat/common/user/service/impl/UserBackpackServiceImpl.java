@@ -1,7 +1,7 @@
 package com.hs.mallchat.common.user.service.impl;
 
 import com.hs.mallchat.common.common.annotation.RedissonLock;
-import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
+import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.common.service.LockService;
 import com.hs.mallchat.common.user.dao.UserBackpackDao;
 import com.hs.mallchat.common.user.domain.entity.UserBackpack;
@@ -112,7 +112,7 @@ public class UserBackpackServiceImpl implements IUserBackpackService {
         UserBackpack newItem = UserBackpack.builder()
                 .uid(uid)
                 .itemId(itemId)
-                .status(YerOrNoEnum.NO.getStatus())
+                .status(YesOrNoEnum.NO.getStatus())
                 .idempotent(idempotent)
                 .build();
         userBackpackDao.save(newItem);

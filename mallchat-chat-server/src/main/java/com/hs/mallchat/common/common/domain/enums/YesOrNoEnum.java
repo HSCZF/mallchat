@@ -9,7 +9,7 @@ import lombok.*;
  */
 @Getter
 @AllArgsConstructor
-public enum YerOrNoEnum {
+public enum YesOrNoEnum {
 
     NO(0, "否"),
     YES(1, "是"),

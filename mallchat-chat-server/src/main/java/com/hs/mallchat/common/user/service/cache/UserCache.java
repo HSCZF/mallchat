@@ -1,5 +1,7 @@
 package com.hs.mallchat.common.user.service.cache;
 
+import com.hs.mallchat.common.common.constant.RedisKey;
+import com.hs.mallchat.common.common.utils.RedisUtils;
 import com.hs.mallchat.common.user.dao.BlackDao;
 import com.hs.mallchat.common.user.dao.UserRoleDao;
 import com.hs.mallchat.common.user.domain.entity.Black;
@@ -55,4 +57,11 @@ public class UserCache {
     }
 
 
+    public List<Long> getUserModifyTime(List<Long> uidList) {
+        List<String> keys = uidList.stream()
+                .map(uid ->
+                        RedisKey.getKey(RedisKey.USER_MODIFY_STRING, uid))
+                .collect(Collectors.toList());
+        return RedisUtils.mget(keys, Long.class);
+    }
 }

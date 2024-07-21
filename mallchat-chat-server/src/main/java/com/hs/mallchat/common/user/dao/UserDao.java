@@ -1,9 +1,8 @@
 package com.hs.mallchat.common.user.dao;
 
-import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
+import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.mapper.UserMapper;
-import com.hs.mallchat.common.user.service.UserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -50,14 +49,14 @@ public class UserDao extends ServiceImpl<UserMapper, User> {
     public void invalidUid(Long id) {
         lambdaUpdate()
                 .eq(User::getId, id)
-                .set(User::getStatus, YerOrNoEnum.YES.getStatus())
+                .set(User::getStatus, YesOrNoEnum.YES.getStatus())
                 .update();
 
     }
 
-    public List<User> getFriendList(List<Long> friendUidLists) {
+    public List<User> getFriendList(List<Long> uids) {
         return lambdaQuery()
-                .in(User::getId, friendUidLists)
+                .in(User::getId, uids)
                 .select(User::getId, User::getActiveStatus, User::getName, User::getAvatar)
                 .list();
     }

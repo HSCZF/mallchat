@@ -4,9 +4,11 @@ package com.hs.mallchat.common.user.controller;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.common.utils.RequestHolder;
+import com.hs.mallchat.common.user.domain.dto.SummeryInfoDTO;
 import com.hs.mallchat.common.user.domain.enums.RoleEnum;
 import com.hs.mallchat.common.user.domain.vo.request.user.BlackReq;
 import com.hs.mallchat.common.user.domain.vo.request.user.ModifyNameByReq;
+import com.hs.mallchat.common.user.domain.vo.request.user.SummeryInfoReq;
 import com.hs.mallchat.common.user.domain.vo.request.user.WearingBadgeReq;
 import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
@@ -39,10 +41,19 @@ public class UserController {
     private IRoleService iRoleService;
 
     @GetMapping("/userInfo")
-    @ApiOperation("获取用户个人信息")
+    @ApiOperation("用户详情")
     public ApiResult<UserInfoResp> getUserInfo() {
         return ApiResult.success(userService.getUserInfo(RequestHolder.get().getUid()));
     }
+
+    @PostMapping("/public/summary/userInfo/batch")
+    @ApiOperation("用户聚合信息-返回的代表需要刷新的")
+    public ApiResult<List<SummeryInfoDTO>> getSummeryUserInfo(@Valid @RequestBody SummeryInfoReq req) {
+        return ApiResult.success(userService.getSummeryUserInfo(req));
+    }
+
+    // 270 20024 20023 22256 256
+    // 20023不见了
 
     @PutMapping("/name")
     @ApiOperation("修改用户名")
@@ -60,7 +71,6 @@ public class UserController {
      * * 1. 错误原因：describe是关键字，不能作为字段名
      * * 2. 解决方案：使用别名，加个反引号``, @TableField("`describe`")
      * * SELECT  id,type,img,`describe`,create_time,update_time  FROM item_config WHERE type = 2
-     *
      */
     @GetMapping("/badges")
     @ApiOperation("可选徽章预览")

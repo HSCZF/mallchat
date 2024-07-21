@@ -39,6 +39,11 @@ public class ItemCache {
         return itemConfigDao.getByType(itemType);
     }
 
+    @Cacheable(cacheNames = "item", key = "'item:'+#itemId")
+    public ItemConfig getById(Long itemId) {
+        return itemConfigDao.getById(itemId);
+    }
+
     /**
      * 清除指定类型物品的配置缓存。
      *

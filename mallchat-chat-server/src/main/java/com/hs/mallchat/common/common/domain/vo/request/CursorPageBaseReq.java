@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.common.domain.vo.request;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,7 @@ public class CursorPageBaseReq {
      *
      * @return 如果游标为空则表示是首次请求或返回首页，返回true；否则返回false。
      */
+    @JsonIgnore
     public Boolean isFirstPage() {
         return StringUtils.isEmpty(cursor);
     }

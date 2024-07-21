@@ -1,6 +1,6 @@
 package com.hs.mallchat.common.user.service.adapter;
 
-import com.hs.mallchat.common.common.domain.enums.YerOrNoEnum;
+import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.user.domain.entity.ItemConfig;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.domain.entity.UserBackpack;
@@ -81,9 +81,9 @@ public class UserAdapter {
                     // 将物品配置信息复制到徽章响应对象
                     BeanUtils.copyProperties(a, resp);
                     // 根据用户背包中的ID集合，判断用户是否获取了该徽章，并设置相应状态
-                    resp.setObtain(obtainItemSet.contains(a.getId()) ? YerOrNoEnum.YES.getStatus() : YerOrNoEnum.NO.getStatus());
+                    resp.setObtain(obtainItemSet.contains(a.getId()) ? YesOrNoEnum.YES.getStatus() : YesOrNoEnum.NO.getStatus());
                     // 根据用户当前佩戴的徽章ID，判断用户是否正在佩戴该徽章，并设置相应状态
-                    resp.setWearing(Objects.equals(a.getId(), user.getItemId()) ? YerOrNoEnum.YES.getStatus() : YerOrNoEnum.NO.getStatus());
+                    resp.setWearing(Objects.equals(a.getId(), user.getItemId()) ? YesOrNoEnum.YES.getStatus() : YesOrNoEnum.NO.getStatus());
                     return resp;
                 })
                 // 按照佩戴和获取状态降序排序
