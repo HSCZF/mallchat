@@ -1,8 +1,10 @@
 package com.hs.mallchat.common.user.service;
 
+import com.hs.mallchat.common.user.domain.dto.ItemInfoDTO;
 import com.hs.mallchat.common.user.domain.dto.SummeryInfoDTO;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.domain.vo.request.user.BlackReq;
+import com.hs.mallchat.common.user.domain.vo.request.user.ItemInfoReq;
 import com.hs.mallchat.common.user.domain.vo.request.user.SummeryInfoReq;
 import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
@@ -36,4 +38,6 @@ public interface UserService {
      * 获取用户汇总信息
      */
     List<SummeryInfoDTO> getSummeryUserInfo(SummeryInfoReq req);
+
+    List<ItemInfoDTO> getItemInfo(ItemInfoReq req);
 }

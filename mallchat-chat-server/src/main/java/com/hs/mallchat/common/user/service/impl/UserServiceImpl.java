@@ -8,6 +8,7 @@ import com.hs.mallchat.common.user.dao.BlackDao;
 import com.hs.mallchat.common.user.dao.ItemConfigDao;
 import com.hs.mallchat.common.user.dao.UserBackpackDao;
 import com.hs.mallchat.common.user.dao.UserDao;
+import com.hs.mallchat.common.user.domain.dto.ItemInfoDTO;
 import com.hs.mallchat.common.user.domain.dto.SummeryInfoDTO;
 import com.hs.mallchat.common.user.domain.entity.Black;
 import com.hs.mallchat.common.user.domain.entity.ItemConfig;
@@ -17,6 +18,7 @@ import com.hs.mallchat.common.user.domain.enums.BlackTypeEnum;
 import com.hs.mallchat.common.user.domain.enums.ItemEnum;
 import com.hs.mallchat.common.user.domain.enums.ItemTypeEnum;
 import com.hs.mallchat.common.user.domain.vo.request.user.BlackReq;
+import com.hs.mallchat.common.user.domain.vo.request.user.ItemInfoReq;
 import com.hs.mallchat.common.user.domain.vo.request.user.SummeryInfoReq;
 import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
@@ -122,6 +124,29 @@ public class UserServiceImpl implements UserService {
                 .map(a -> batch.containsKey(a.getUid()) ? batch.get(a.getUid()) : SummeryInfoDTO.skip(a.getUid()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 批量获取用户徽章信息
+     *
+     * @param req
+     * @return
+     */
+    @Override
+    public List<ItemInfoDTO> getItemInfo(ItemInfoReq req) {
+        // //简单做，更新时间可判断被修改
+        return req.getReqList().stream().map(a -> {
+            ItemConfig itemConfig = itemCache.getById(a.getItemId());
+            // itemConfig.getUpdateTime().getTime()，时间返回Long类型
+            if (Objects.nonNull(a.getLastModifyTime()) && a.getLastModifyTime() >= itemConfig.getUpdateTime().getTime()) {
+                return ItemInfoDTO.skip(a.getItemId());
+            }
+            ItemInfoDTO dto = new ItemInfoDTO();
+            dto.setItemId(itemConfig.getId());
+            dto.setImg(itemConfig.getImg());
+            dto.setDescribe(itemConfig.getDescribe());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private List<Long> getNeedSyncUidList(List<SummeryInfoReq.infoReq> reqList) {

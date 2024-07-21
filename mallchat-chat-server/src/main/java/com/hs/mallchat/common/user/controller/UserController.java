@@ -4,12 +4,10 @@ package com.hs.mallchat.common.user.controller;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.common.utils.RequestHolder;
+import com.hs.mallchat.common.user.domain.dto.ItemInfoDTO;
 import com.hs.mallchat.common.user.domain.dto.SummeryInfoDTO;
 import com.hs.mallchat.common.user.domain.enums.RoleEnum;
-import com.hs.mallchat.common.user.domain.vo.request.user.BlackReq;
-import com.hs.mallchat.common.user.domain.vo.request.user.ModifyNameByReq;
-import com.hs.mallchat.common.user.domain.vo.request.user.SummeryInfoReq;
-import com.hs.mallchat.common.user.domain.vo.request.user.WearingBadgeReq;
+import com.hs.mallchat.common.user.domain.vo.request.user.*;
 import com.hs.mallchat.common.user.domain.vo.response.user.BadgeResp;
 import com.hs.mallchat.common.user.domain.vo.response.user.UserInfoResp;
 import com.hs.mallchat.common.user.service.IRoleService;
@@ -52,8 +50,12 @@ public class UserController {
         return ApiResult.success(userService.getSummeryUserInfo(req));
     }
 
-    // 270 20024 20023 22256 256
-    // 20023不见了
+    @PostMapping("/public/badges/batch")
+    @ApiOperation("徽章聚合信息-返回的代表需要刷新的")
+    public ApiResult<List<ItemInfoDTO>> getItemInfo(@Valid @RequestBody ItemInfoReq req) {
+        return ApiResult.success(userService.getItemInfo(req));
+    }
+
 
     @PutMapping("/name")
     @ApiOperation("修改用户名")
