@@ -134,7 +134,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<ItemInfoDTO> getItemInfo(ItemInfoReq req) {
-        // //简单做，更新时间可判断被修改
+        // 简单做，更新时间可判断被修改，不需要批量缓存框架了，徽章就几个而已
         return req.getReqList().stream().map(a -> {
             ItemConfig itemConfig = itemCache.getById(a.getItemId());
             // itemConfig.getUpdateTime().getTime()，时间返回Long类型

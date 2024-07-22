@@ -14,7 +14,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Description: 用户所有信息的缓存
+ * Description:
+ * 批量的旁路缓存,用户基本徽章信息的缓存
  *
  * @Author: CZF
  * @Create: 2024/7/2 - 11:17

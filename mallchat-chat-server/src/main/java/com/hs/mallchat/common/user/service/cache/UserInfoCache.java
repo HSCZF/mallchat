@@ -13,7 +13,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Description:
+ * Description: AbstractRedisStringCache批量缓存框架的一个用户具体实现类
+ * 批量的旁路缓存,用户基本信息的缓存
  *
  * @Author: CZF
  * @Create: 2024/7/18 - 16:05
