@@ -40,6 +40,7 @@ public class ChatController {
         // todo 先不加自定义注解FrequencyControl，后面再加
         Long msgId = chatService.sendMsg(request, RequestHolder.get().getUid());
         // todo 返回完整消息格式，暂时也不用写
+        // 测试下推送
         return ApiResult.success();
     }
 
