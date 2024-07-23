@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 /**
  * Description:
- * 批量的旁路缓存,用户基本徽章信息的缓存
+ * 批量的旁路缓存,用户基本信息的缓存
  *
  * @Author: CZF
  * @Create: 2024/7/2 - 11:17

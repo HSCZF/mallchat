@@ -27,6 +27,16 @@ public class RedisKey {
      */
     public static final String USER_SUMMARY_STRING = "userSummary:uid_%d";
 
+    /**
+     * 房间 详情
+     */
+    public static final String ROOM_INFO_STRING = "roomInfo:roomId_%d";
+
+    /**
+     * 群组详情
+     */
+    public static final String GROUP_INFO_STRING = "groupInfo:roomId_%d";
+
 
     public static String getKey(String key, Object... objects) {
         return BASE_KEY + String.format(key, objects);
