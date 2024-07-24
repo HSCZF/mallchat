@@ -9,16 +9,14 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mallchat-framwork</artifactId>
+    <artifactId>mallchat-tools</artifactId>
     <packaging>pom</packaging>
     <modules>
         <module>mallchat-common-starter</module>
+        <module>mallchat-frequency-control</module>
+        <module>mallchat-oss-starter</module>
+        <module>mallchat-redis</module>
+        <module>mallchat-transaction</module>
     </modules>
-
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
 </project>
