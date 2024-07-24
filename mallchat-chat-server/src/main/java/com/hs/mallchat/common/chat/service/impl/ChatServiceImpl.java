@@ -52,18 +52,13 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public Long sendMsg(ChatMessageReq request, Long uid) {
         check(request, uid);
-        // todo 这里先不扩展，后续再改
-        AbstractMsgHandler msgHandler = MsgHandlerFactory.getStrategyNoNull(request.getMsgType());
-        // todo checkMsg 保存校验还没写
-        msgHandler.checkMsg(request, uid);
-        // 同步获取消息的跳转链接标题
-        Message insert = MessageAdapter.buildMsgSave(request, uid);
-        messageDao.save(insert);
-        msgHandler.saveMsg(insert, request);
-
+        // 优化，改泛型
+        AbstractMsgHandler<?> msgHandler = MsgHandlerFactory.getStrategyNoNull(request.getMsgType());
+        // 保存校验
+        Long msgId = msgHandler.checkAndSaveMsg(request, uid);
         // 发布消息发送事件
 //        ApplicationEventPublisher.publishEvent();
-        return insert.getId();
+        return msgId;
     }
 
     private void check(ChatMessageReq request, Long uid) {

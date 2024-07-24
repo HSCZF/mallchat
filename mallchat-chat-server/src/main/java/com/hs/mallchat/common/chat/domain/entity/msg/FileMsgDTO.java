@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
- * Description: 语音消息入参
+ * Description: 文件消息入参
  *
  * @Author: CZF
  * @Create: 2024/7/22 - 17:06

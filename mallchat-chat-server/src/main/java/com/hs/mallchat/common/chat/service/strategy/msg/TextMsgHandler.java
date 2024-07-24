@@ -19,7 +19,7 @@ import java.util.Optional;
  * @Create: 2024/7/23 - 8:42
  */
 @Component
-public class TextMsgHandler extends AbstractMsgHandler {
+public class TextMsgHandler extends AbstractMsgHandler<TextMsgReq> {
 
     @Autowired
     private MessageDao messageDao;
@@ -33,25 +33,25 @@ public class TextMsgHandler extends AbstractMsgHandler {
     }
 
     /**
-     * 校验消息-保存前校验
+     * 在各个子类实现
      *
-     * @param req
+     * @param body
+     * @param roomId
      * @param uid
      */
     @Override
-    public void checkMsg(ChatMessageReq req, Long uid) {
-
+    protected void checkMsg(TextMsgReq body, Long roomId, Long uid) {
+        // todo 暂时不写
     }
 
     /**
      * 保存消息
      *
      * @param msg
-     * @param request
+     * @param body
      */
     @Override
-    public void saveMsg(Message msg, ChatMessageReq request) {
-        TextMsgReq body = BeanUtil.toBean(request.getBody(), TextMsgReq.class);
+    public void saveMsg(Message msg, TextMsgReq body) {
         MessageExtra extra = Optional.ofNullable(msg.getExtra()).orElse(new MessageExtra());
         Message update = new Message();
         update.setId(msg.getId());
@@ -81,7 +81,7 @@ public class TextMsgHandler extends AbstractMsgHandler {
      */
     @Override
     public Object showReplyMsg(Message msg) {
-        return null;
+        return msg.getContent();
     }
 
     /**
@@ -90,7 +90,7 @@ public class TextMsgHandler extends AbstractMsgHandler {
      * @param msg
      */
     @Override
-    public Object showContactMsg(Message msg) {
-        return null;
+    public String showContactMsg(Message msg) {
+        return msg.getContent();
     }
 }
