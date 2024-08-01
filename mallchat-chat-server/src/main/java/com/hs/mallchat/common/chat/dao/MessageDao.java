@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.chat.dao;
 
 import com.hs.mallchat.common.chat.domain.entity.Message;
+import com.hs.mallchat.common.chat.domain.enums.MessageStatusEnum;
 import com.hs.mallchat.common.chat.mapper.MessageMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -16,4 +17,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class MessageDao extends ServiceImpl<MessageMapper, Message> {
 
+    public void invalidByUid(Long uid) {
+        lambdaUpdate()
+                .eq(Message::getFromUid, uid)
+                .set(Message::getStatus, MessageStatusEnum.DELETE.getStatus())
+                .update();
+    }
 }

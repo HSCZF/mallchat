@@ -3,6 +3,8 @@ package com.hs.mallchat.common.common.interceptor;
 import cn.hutool.extra.servlet.ServletUtil;
 import com.hs.mallchat.common.common.domain.dto.RequestInfo;
 import com.hs.mallchat.common.common.utils.RequestHolder;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -13,9 +15,11 @@ import java.util.Optional;
 /**
  * @Author: CZF
  * @Create: 2024/6/7 - 10:04
- * Description:
+ * Description: 信息收集的拦截器
  * 配置的拦截器不会直接生效，还需要配置InterceptorConfig类来配置拦截器。
  */
+@Order(1)
+@Slf4j
 @Component
 public class CollectorInterceptor implements HandlerInterceptor {
 
@@ -32,25 +36,19 @@ public class CollectorInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 创建RequestInfo对象，用于存储请求的相关信息。
+        RequestInfo info = new RequestInfo();
         // 尝试从请求中获取用户ID，首先通过getAttribute获取可能的UID字符串，
         // 然后转换为Long类型。如果获取不到，则默认为null。
-        Long uid = Optional.ofNullable(request.getAttribute(TokenInterceptor.UID))
+        Long uid = Optional.ofNullable(request.getAttribute(TokenInterceptor.ATTRIBUTE_UID))
                 .map(Object::toString)
                 .map(Long::parseLong)
                 .orElse(null);
-
-        // 获取客户端IP地址。
-        String ip = ServletUtil.getClientIP(request);
-
-        // 创建RequestInfo对象，用于存储请求的相关信息。
-        RequestInfo requestInfo = new RequestInfo();
         // 设置用户ID和客户端IP到RequestInfo对象中。
-        requestInfo.setUid(uid);
-        requestInfo.setIp(ip);
-
+        info.setUid(uid);
+        info.setIp(ServletUtil.getClientIP(request));
         // 将RequestInfo对象设置到RequestHolder中，以供后续使用。
-        RequestHolder.set(requestInfo);
-
+        RequestHolder.set(info);
         // 返回true，表示无论条件如何，都会继续处理请求。
         return true;
     }

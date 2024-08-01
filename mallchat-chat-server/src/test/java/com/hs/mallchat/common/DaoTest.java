@@ -50,6 +50,12 @@ public class DaoTest {
     private IUserBackpackService iUserBackpackService;
 
     @Test
+    public void jwt() {
+        String login = loginService.login(UID);
+        System.out.println(login);
+    }
+
+    @Test
     public void testAcquireItemRedisson() {
         iUserBackpackService.acquireItem(UID, ItemEnum.PLANET.getId(), IdempotentEnum.UID, UID + "");
     }
@@ -68,12 +74,6 @@ public class DaoTest {
         System.out.println(user2);
         boolean save = userDao.save(user);
         System.out.println(save);
-    }
-
-    @Test
-    public void jwt() {
-        String login = loginService.login(UID);
-        System.out.println(login);
     }
 
     @Test

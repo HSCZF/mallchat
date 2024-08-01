@@ -1,6 +1,6 @@
 package com.hs.mallchat.common.user.service.handler;
 
-import com.hs.mallchat.common.user.service.WXMsgService;
+import com.hs.mallchat.common.user.service.WxMsgService;
 import com.hs.mallchat.common.user.service.adapter.TextBuilder;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.common.session.WxSessionManager;
@@ -21,26 +21,32 @@ public class SubscribeHandler extends AbstractHandler {
 
 
     @Autowired
-    private WXMsgService wxMsgService;
+    private WxMsgService wxMsgService;
+
     @Override
-    public WxMpXmlOutMessage handle(WxMpXmlMessage wxMpXmlMessage,
-                                    Map<String, Object> context, WxMpService wxMpService,
+    public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage,
+                                    Map<String, Object> context, WxMpService weixinService,
                                     WxSessionManager sessionManager) throws WxErrorException {
 
-        this.logger.info("新关注用户 OPENID: " + wxMpXmlMessage.getFromUser());
-        // 事件码 qrscene_2
+        this.logger.info("新关注用户 OPENID: " + wxMessage.getFromUser());
+
         WxMpXmlOutMessage responseResult = null;
         try {
-             responseResult = wxMsgService.scan(wxMpXmlMessage);
-        }catch (Exception e){
+        } catch (Exception e) {
             this.logger.error(e.getMessage(), e);
         }
-        if(responseResult != null){
+
+        if (responseResult != null) {
             return responseResult;
         }
 
-        return TextBuilder.build("你好，感谢关注！", wxMpXmlMessage);
-    }
+        try {
+            return new TextBuilder().build("感谢关注", wxMessage, weixinService);
+        } catch (Exception e) {
+            this.logger.error(e.getMessage(), e);
+        }
 
+        return null;
+    }
 
 }

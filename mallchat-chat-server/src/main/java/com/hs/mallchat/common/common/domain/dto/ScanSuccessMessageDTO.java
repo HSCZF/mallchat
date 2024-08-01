@@ -1,0 +1,24 @@
+package com.hs.mallchat.common.common.domain.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+/**
+ * Description: 扫码成功对象，推送给用户的消息对象
+ *
+ * @Author: CZF
+ * @Create: 2024/7/31 - 9:28
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ScanSuccessMessageDTO implements Serializable {
+    /**
+     * 推送的uid
+     */
+    private Integer code;
+
+}

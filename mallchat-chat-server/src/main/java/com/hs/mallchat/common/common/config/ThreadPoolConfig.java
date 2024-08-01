@@ -1,8 +1,7 @@
 package com.hs.mallchat.common.common.config;
 
-import com.hs.mallchat.common.common.thread.MyThreadFactory;
+import com.hs.mallchat.common.common.factory.MyThreadFactory;
 import com.hs.mallchat.transaction.annotation.SecureInvokeConfigurer;
-import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;

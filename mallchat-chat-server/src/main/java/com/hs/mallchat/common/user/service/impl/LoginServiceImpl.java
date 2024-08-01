@@ -1,10 +1,13 @@
 package com.hs.mallchat.common.user.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.hs.mallchat.common.common.constant.RedisKey;
 import com.hs.mallchat.common.common.utils.JwtUtils;
 import com.hs.mallchat.common.common.utils.RedisUtils;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.service.LoginService;
+import io.netty.util.internal.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -16,8 +19,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * @Author: CZF
  * @Create: 2024/5/30 - 12:04
+ * Description: 登录相关处理类
  */
 @Service
+@Slf4j
 public class LoginServiceImpl implements LoginService {
 
     public static final int TOKEN_EXPIRE_DAYS = 3;
@@ -39,21 +44,21 @@ public class LoginServiceImpl implements LoginService {
     @Async
     public void renewalTokenIfNecessary(String token) {
         // 根据令牌获取对应用户的ID。
-        Long validUid = getValidUid(token);
-        // 根据用户ID生成Redis中的令牌键。
-        String userTokenKey = getUserTokenKey(validUid);
-        // 获取令牌的剩余有效期，以天为单位。
-        Long expireDays = RedisUtils.getExpire(userTokenKey, TimeUnit.DAYS);
+        Long uid = jwtUtils.getUidOrNull(token);
+        if (Objects.isNull(uid)) {
+            return;
+        }
+        String key = RedisKey.getKey(RedisKey.USER_TOKEN_STRING, uid);
+        Long expireDays = RedisUtils.getExpire(key, TimeUnit.DAYS);
         // 如果令牌不存在，则不进行任何操作。
         if (expireDays == -2) { //不存在的key
             return;
         }
         // 如果令牌的有效期小于预设的刷新阈值，则延长令牌的有效期。
         if (expireDays < TOKEN_RENEWAL_DAYS) {
-            RedisUtils.expire(getUserTokenKey(validUid), TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
+            RedisUtils.expire(key, TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
         }
     }
-
 
 
     /**
@@ -64,8 +69,14 @@ public class LoginServiceImpl implements LoginService {
      */
     @Override
     public String login(Long uid) {
-        String token = jwtUtils.createToken(uid);
-        RedisUtils.set(getUserTokenKey(uid), token, TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
+        String key = RedisKey.getKey(RedisKey.USER_TOKEN_STRING, uid);
+        String token = RedisUtils.getStr(key);
+        if (StrUtil.isNotBlank(token)) {
+            return token;
+        }
+        // 获取用户token
+        token = jwtUtils.createToken(uid);
+        RedisUtils.set(key, token, TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
         return token;
     }
 
@@ -77,15 +88,24 @@ public class LoginServiceImpl implements LoginService {
      */
     @Override
     public Long getValidUid(String token) {
+        boolean verify = verify(token);
+        return verify ? jwtUtils.getUidOrNull(token) : null;
+    }
+    /**
+     * 校验token是不是有效
+     *
+     * @param token
+     * @return
+     */
+    @Override
+    public boolean verify(String token) {
         Long uid = jwtUtils.getUidOrNull(token);
         if (Objects.isNull(uid)) {
-            return null;
+            return false;
         }
-        String oldToken = RedisUtils.getStr(getUserTokenKey(uid));
-        return Objects.equals(oldToken, token) ? uid : null;
+        String key = RedisKey.getKey(RedisKey.USER_TOKEN_STRING, uid);
+        String realToken = RedisUtils.getStr(key);
+        return Objects.equals(token, realToken);//有可能token失效了，需要校验是不是和最新token一致
     }
 
-    private String getUserTokenKey(Long uid) {
-        return RedisKey.getKey(RedisKey.USER_TOKEN_STRING, uid);
-    }
 }

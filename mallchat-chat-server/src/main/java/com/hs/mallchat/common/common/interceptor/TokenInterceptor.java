@@ -1,8 +1,12 @@
 package com.hs.mallchat.common.common.interceptor;
 
+import com.hs.mallchat.common.common.constant.MDCKey;
 import com.hs.mallchat.common.common.exception.HttpErrorEnum;
 import com.hs.mallchat.common.user.service.LoginService;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -18,87 +22,56 @@ import java.util.Optional;
  * @Author: CZF
  * @Create: 2024/6/6 - 17:09
  */
+@Order(-2)
+@Slf4j
 @Component
 public class TokenInterceptor implements HandlerInterceptor {
 
-    /**
-     * 请求头中授权字段的名称
-     */
-    public static final String HEADER_AUTHORIZATION = "Authorization";
-
-    /**
-     * 授权字段的前缀，例如 "Bearer token_value"
-     * Bearer后接一个空格“ ”
-     */
+    public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String AUTHORIZATION_SCHEMA = "Bearer ";
+    public static final String ATTRIBUTE_UID = "uid";
 
-    /**
-     * 用户ID的键名，用于在请求中存储有效用户ID
-     */
-    public static final String UID = "uid";
-
-    /**
-     * 常量布尔值，这里未使用
-     */
-    public static final boolean BOOLEAN = false;
-
-    /**
-     * 自动注入登录服务，用于验证令牌的有效性
-     */
     @Autowired
     private LoginService loginService;
 
-    /**
-     * 拦截请求，检查用户登录状态。
-     *
-     * @param request  HTTP请求对象
-     * @param response HTTP响应对象
-     * @param handler  将要处理请求的处理器
-     * @return 如果用户已登录且请求不是公共接口，返回true继续处理；否则返回false，阻止处理
-     * @throws Exception 可能抛出的异常
-     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        //获取用户登录token
         String token = getToken(request);
         Long validUid = loginService.getValidUid(token);
-        if (Objects.nonNull(validUid)) { // 用户有登录态
-            request.setAttribute(UID, validUid);
-        } else { // 用户未登录，看看是不是公共接口
-            boolean isPublicURL = isPublicURL(request);
-            if (!isPublicURL) {
-                // 401 错误处理，注释表示需要实现
+        if (Objects.nonNull(validUid)) {//有登录态
+            request.setAttribute(ATTRIBUTE_UID, validUid);
+        } else {
+            boolean isPublicURI = isPublicURI(request.getRequestURI());
+            if (!isPublicURI) {//又没有登录态，又不是公开路径，直接401
                 HttpErrorEnum.ACCESS_DENIED.sendHttpError(response);
                 return false;
             }
         }
+        MDC.put(MDCKey.UID, String.valueOf(validUid));
         return true;
     }
 
-    /**
-     * 判断请求URL是否为公共接口。
-     *
-     * @param request HTTP请求对象
-     * @return 如果URL路径以"/public"开头，返回true，表示是公共接口；否则返回false
-     */
-    private boolean isPublicURL(HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        String[] split = requestURI.split("/");
-        return split.length > 3 && "public".equals(split[3]);
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        MDC.remove(MDCKey.UID);
     }
 
     /**
-     * 从请求头中获取令牌。
+     * 判断是不是公共方法，可以未登录访问的
      *
-     * @param request HTTP请求对象
-     * @return 如果请求头包含有效的授权字段，返回去除前缀后的令牌字符串；否则返回null
+     * @param requestURI
      */
+    private boolean isPublicURI(String requestURI) {
+        String[] split = requestURI.split("/");
+        return split.length > 2 && "public".equals(split[3]);
+    }
+
     private String getToken(HttpServletRequest request) {
-        String header = request.getHeader(HEADER_AUTHORIZATION);
-        // 使用Optional对象处理可能为null的情况
+        String header = request.getHeader(AUTHORIZATION_HEADER);
         return Optional.ofNullable(header)
                 .filter(h -> h.startsWith(AUTHORIZATION_SCHEMA))
-                .map(h -> h.replaceFirst(AUTHORIZATION_SCHEMA, ""))
+                .map(h -> h.substring(AUTHORIZATION_SCHEMA.length()))
                 .orElse(null);
     }
-
 }

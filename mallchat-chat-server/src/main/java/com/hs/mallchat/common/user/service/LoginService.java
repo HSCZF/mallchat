@@ -30,4 +30,11 @@ public interface LoginService {
      */
     Long getValidUid(String token);
 
+    /**
+     * 校验token是不是有效
+     *
+     * @param token
+     * @return
+     */
+    boolean verify(String token);
 }

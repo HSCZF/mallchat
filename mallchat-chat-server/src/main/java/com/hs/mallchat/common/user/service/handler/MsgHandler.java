@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.user.service.handler;
 
 import cn.hutool.json.JSONUtil;
+import com.hs.mallchat.common.user.service.adapter.TextBuilder;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.common.session.WxSessionManager;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -27,7 +28,7 @@ public class MsgHandler extends AbstractHandler {
                                     Map<String, Object> context, WxMpService weixinService,
                                     WxSessionManager sessionManager) {
         if (true) {
-
+            // todo wxMsgDao.save()未实现
             return null;
         }
         if (!wxMessage.getMsgType().equals(XmlMsgType.EVENT)) {
@@ -50,7 +51,7 @@ public class MsgHandler extends AbstractHandler {
         //组装回复消息
         String content = "收到信息内容：" + JSONUtil.toJsonStr(wxMessage);
 
-        return null;
+        return new TextBuilder().build(content, wxMessage, weixinService);
 
     }
 

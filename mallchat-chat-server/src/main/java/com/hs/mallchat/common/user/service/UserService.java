@@ -21,7 +21,6 @@ import java.util.List;
  */
 public interface UserService {
 
-    Long registered(User insert);
 
     UserInfoResp getUserInfo(Long uid);
 
@@ -31,6 +30,13 @@ public interface UserService {
 
 
     void wearingBadge(Long uid, Long itemId);
+
+    /**
+     * 用户注册，需要获得id
+     *
+     * @param user
+     */
+    void register(User user);
 
     void black(BlackReq req);
 

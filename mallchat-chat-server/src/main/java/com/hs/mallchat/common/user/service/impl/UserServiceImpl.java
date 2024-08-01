@@ -67,20 +67,6 @@ public class UserServiceImpl implements UserService {
     private BlackDao blackDao;
 
 
-    /**
-     * 用户注册，开个事务
-     *
-     * @param insert
-     * @return
-     */
-    @Override
-    @Transactional
-    public Long registered(User insert) {
-        userDao.save(insert);
-        // 用户注册的事件
-        applicationEventPublisher.publishEvent(new UserRegisterEvent(this, insert));
-        return insert.getId();
-    }
 
     @Override
     public void wearingBadge(Long uid, Long itemId) {
@@ -92,6 +78,17 @@ public class UserServiceImpl implements UserService {
         AssertUtil.equal(itemConfig.getType(), ItemTypeEnum.BADGE.getType(), "只有徽章才能佩戴！");
         // 佩戴徽章
         userDao.wearingBadge(uid, itemId);
+    }
+
+    /**
+     * 用户注册，需要获得id
+     *
+     * @param user
+     */
+    @Override
+    public void register(User user) {
+        userDao.save(user);
+        applicationEventPublisher.publishEvent(new UserRegisterEvent(this, user));
     }
 
     @Override

@@ -11,10 +11,10 @@ import me.chanjar.weixin.mp.bean.message.WxMpXmlOutTextMessage;
  */
 public class TextBuilder {
 
-    public static WxMpXmlOutMessage build(String content, WxMpXmlMessage wxMpXmlMessage) {
+    public WxMpXmlOutMessage build(String content, WxMpXmlMessage wxMessage, WxMpService service) {
         WxMpXmlOutTextMessage wxMsg = WxMpXmlOutMessage.TEXT().content(content)
-                .fromUser(wxMpXmlMessage.getToUser())
-                .toUser(wxMpXmlMessage.getFromUser())
+                .fromUser(wxMessage.getToUser())
+                .toUser(wxMessage.getFromUser())
                 .build();
         return wxMsg;
     }

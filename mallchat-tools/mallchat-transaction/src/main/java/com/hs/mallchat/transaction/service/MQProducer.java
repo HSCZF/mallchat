@@ -15,7 +15,7 @@ import org.springframework.messaging.support.MessageBuilder;
  */
 public class MQProducer {
 
-    @Autowired(required = false)
+    @Autowired
     private RocketMQTemplate rocketMQTemplate;
 
     public void sendMsg(String topic, Object body) {
