@@ -1,5 +1,10 @@
 package com.hs.mallchat.common.common.event.listener;
 
+import com.hs.mallchat.common.chat.dao.MessageDao;
+import com.hs.mallchat.common.chat.domain.entity.Message;
+import com.hs.mallchat.common.chat.domain.entity.Room;
+import com.hs.mallchat.common.chat.domain.enums.HotFlagEnum;
+import com.hs.mallchat.common.chat.service.cache.RoomCache;
 import com.hs.mallchat.common.common.constant.MQConstant;
 import com.hs.mallchat.common.common.domain.dto.MsgSendMessageDTO;
 import com.hs.mallchat.common.common.event.MessageSendEvent;
@@ -9,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import javax.validation.constraints.NotNull;
+import java.util.Objects;
 
 /**
  * Description: 消息发送监听器
@@ -20,6 +28,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class MessageSendListener {
 
+    @Autowired
+    private MessageDao messageDao;
+    @Autowired
+    private RoomCache roomCache;
     @Autowired
     private MQProducer mqProducer;
 
@@ -40,7 +52,17 @@ public class MessageSendListener {
         mqProducer.sendSecureMsg(MQConstant.SEND_MSG_TOPIC, new MsgSendMessageDTO(msgId), msgId);
     }
 
+    public void handlerMsg(@NotNull MessageSendEvent event){
+        Message message = messageDao.getById(event.getMsgId());
+        Room room = roomCache.get(message.getRoomId());
+        if(isHotRoom(room)){
+            // todo openAi的聊天，暂时不写
+        }
+    }
 
+    public boolean isHotRoom(Room room) {
+        return Objects.equals(HotFlagEnum.YES.getType(), room.getHotFlag());
+    }
 
 
 }

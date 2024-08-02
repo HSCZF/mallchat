@@ -114,6 +114,19 @@ public class ChatServiceImpl implements ChatService {
         return CollUtil.getFirst(getMsgRespBatch(Collections.singletonList(message), receiveUid));
     }
 
+    /**
+     * 根据消息获取消息前端展示的物料
+     *
+     * @param msgId
+     * @param receiveUid 接受消息的uid，可null
+     * @return
+     */
+    @Override
+    public ChatMessageResp getMsgResp(Long msgId, Long receiveUid) {
+        Message msg = messageDao.getById(msgId);
+        return getMsgResp(msg, receiveUid);
+    }
+
     @Override
     public ChatMemberStatisticResp getMemberStatistic() {
         log.info("ChatServiceImpl-getMemberStatistic()：[]" + Thread.currentThread().getName());

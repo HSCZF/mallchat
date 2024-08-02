@@ -3,6 +3,7 @@ package com.hs.mallchat.common.chat.dao;
 import com.hs.mallchat.common.chat.domain.entity.RoomFriend;
 import com.hs.mallchat.common.chat.mapper.RoomFriendMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,5 +21,18 @@ public class RoomFriendDao extends ServiceImpl<RoomFriendMapper, RoomFriend> {
         return lambdaQuery()
                 .eq(RoomFriend::getRoomId, roomId)
                 .one();
+    }
+
+    public RoomFriend getByKey(String key) {
+        return lambdaQuery()
+                .eq(RoomFriend::getRoomKey, key)
+                .one();
+    }
+
+    public void restoreRoom(Long id) {
+        lambdaUpdate()
+                .eq(RoomFriend::getId, id)
+                .set(RoomFriend::getStatus, NormalOrNoEnum.NORMAL.getStatus())
+                .update();
     }
 }
