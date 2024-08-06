@@ -1,5 +1,6 @@
 package com.hs.mallchat.common.user.service.cache;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import com.hs.mallchat.common.common.constant.RedisKey;
 import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
@@ -9,6 +10,7 @@ import com.hs.mallchat.common.user.dao.BlackDao;
 import com.hs.mallchat.common.user.dao.UserDao;
 import com.hs.mallchat.common.user.dao.UserRoleDao;
 import com.hs.mallchat.common.user.domain.entity.Black;
+import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.domain.entity.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,6 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -94,6 +97,40 @@ public class UserCache {
     public void refreshUserModifyTime(Long uid) {
         String key = RedisKey.getKey(RedisKey.USER_MODIFY_STRING, uid);
         RedisUtils.set(key, new Date().getTime());
+    }
+
+    /**
+     * 获取用户信息，盘路缓存模式
+     */
+    public User getUserInfo(Long uid) {
+        return getUserInfoBatch(Collections.singleton(uid)).get(uid);
+    }
+
+    /**
+     * 获取用户信息，盘路缓存模式
+     */
+    private Map<Long, User> getUserInfoBatch(Set<Long> uids) {
+        //批量组装key
+        List<String> keys = uids.stream().map(a -> RedisKey.getKey(RedisKey.USER_INFO_STRING, a)).collect(Collectors.toList());
+        //批量get
+        List<User> mget = RedisUtils.mget(keys, User.class);
+        Map<Long, User> map = mget.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        //发现差集——还需要load更新的uid
+        List<Long> needLoadUidList = uids.stream()
+                .filter(a -> !map.containsKey(a))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(needLoadUidList)) {
+            //批量load
+            List<User> needLoadUserList = userDao.listByIds(needLoadUidList);
+            Map<String, User> redisMap = needLoadUserList.stream()
+                    .collect(Collectors.toMap(a -> RedisKey.getKey(RedisKey.USER_INFO_STRING, a.getId()), Function.identity()));
+            RedisUtils.mset(redisMap, 5 * 60);
+            //加载回redis
+            map.putAll(needLoadUserList.stream().collect(Collectors.toMap(User::getId, Function.identity())));
+        }
+        return map;
     }
 
     @Cacheable(cacheNames = "user", key = "'blackList'")

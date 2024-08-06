@@ -8,12 +8,14 @@ import com.hs.mallchat.common.chat.domain.entity.msg.MessageExtra;
 import com.hs.mallchat.common.chat.domain.entity.msg.MsgRecall;
 import com.hs.mallchat.common.chat.domain.enums.MessageTypeEnum;
 import com.hs.mallchat.common.common.event.MessageRecallEvent;
+import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.service.cache.UserCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -65,8 +67,12 @@ public class RecallMsgHandler extends AbstractMsgHandler<Object> {
      */
     @Override
     public Object showMsg(Message msg) {
-        // TODO: 撤回消息，待实现
-        return null;
+        MsgRecall recall = msg.getExtra().getRecall();
+        User userInfo = userCache.getUserInfo(recall.getRecallUid());
+        if (!Objects.equals(recall.getRecallUid(), msg.getFromUid())) {
+            return "管理员\"" + userInfo.getName() + "\"撤回了一条成员消息";
+        }
+        return "\"" + userInfo.getName() + "\"撤回了一条消息";
     }
 
     /**
