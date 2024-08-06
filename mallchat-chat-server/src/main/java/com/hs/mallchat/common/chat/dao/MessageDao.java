@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.utils.CursorUtils;
+import com.sun.org.apache.regexp.internal.RE;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -36,5 +37,13 @@ public class MessageDao extends ServiceImpl<MessageMapper, Message> {
             wrapper.eq(Message::getStatus, MessageStatusEnum.NORMAL.getStatus());
             wrapper.le(Objects.nonNull(lastMsgId), Message::getId, lastMsgId);
         }, Message::getId);
+    }
+
+    public Integer getGapCount(Long roomId, Long fromId, Long toId) {
+        return lambdaQuery()
+                .eq(Message::getRoomId, roomId)
+                .gt(Message::getId, fromId)
+                .le(Message::getId, toId)
+                .count();
     }
 }

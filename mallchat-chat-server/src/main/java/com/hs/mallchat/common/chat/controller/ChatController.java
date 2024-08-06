@@ -56,6 +56,7 @@ public class ChatController {
 
     /**
      * 发消息
+     * 回复消息，@用户消息，撤回消息的展示体，都在发消息接口里面
      */
     @PostMapping("/msg")
     @ApiOperation("发消息")

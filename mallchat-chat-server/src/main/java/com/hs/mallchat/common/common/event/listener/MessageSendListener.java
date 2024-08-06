@@ -52,6 +52,7 @@ public class MessageSendListener {
         mqProducer.sendSecureMsg(MQConstant.SEND_MSG_TOPIC, new MsgSendMessageDTO(msgId), msgId);
     }
 
+    @TransactionalEventListener(classes = MessageSendEvent.class,fallbackExecution = true)
     public void handlerMsg(@NotNull MessageSendEvent event){
         Message message = messageDao.getById(event.getMsgId());
         Room room = roomCache.get(message.getRoomId());
@@ -64,5 +65,13 @@ public class MessageSendListener {
         return Objects.equals(HotFlagEnum.YES.getType(), room.getHotFlag());
     }
 
+    /**
+     * 给用户微信推送艾特好友的消息通知
+     * （这个没开启，微信不让推）
+     */
+    @TransactionalEventListener(classes = MessageSendEvent.class, fallbackExecution = true)
+    public void publishChatToWechat(@NotNull MessageSendEvent event) {
+        // TODO 给用户微信推送艾特好友的消息通知
+    }
 
 }
