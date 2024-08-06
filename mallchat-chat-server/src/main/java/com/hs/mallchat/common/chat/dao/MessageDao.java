@@ -2,9 +2,15 @@ package com.hs.mallchat.common.chat.dao;
 
 import com.hs.mallchat.common.chat.domain.entity.Message;
 import com.hs.mallchat.common.chat.domain.enums.MessageStatusEnum;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.mapper.MessageMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
+import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
+import com.hs.mallchat.common.common.utils.CursorUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
  * <p>
@@ -22,5 +28,13 @@ public class MessageDao extends ServiceImpl<MessageMapper, Message> {
                 .eq(Message::getFromUid, uid)
                 .set(Message::getStatus, MessageStatusEnum.DELETE.getStatus())
                 .update();
+    }
+
+    public CursorPageBaseResp<Message> getCursorPage(Long roomId, CursorPageBaseReq request, Long lastMsgId) {
+        return CursorUtils.getCursorPageByMysql(this, request, wrapper -> {
+            wrapper.eq(Message::getRoomId, roomId);
+            wrapper.eq(Message::getStatus, MessageStatusEnum.NORMAL.getStatus());
+            wrapper.le(Objects.nonNull(lastMsgId), Message::getId, lastMsgId);
+        }, Message::getId);
     }
 }

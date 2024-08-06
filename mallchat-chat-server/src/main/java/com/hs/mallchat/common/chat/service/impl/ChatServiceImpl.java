@@ -2,11 +2,9 @@ package com.hs.mallchat.common.chat.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import com.hs.mallchat.common.chat.dao.GroupMemberDao;
-import com.hs.mallchat.common.chat.dao.MessageDao;
-import com.hs.mallchat.common.chat.dao.MessageMarkDao;
-import com.hs.mallchat.common.chat.dao.RoomFriendDao;
+import com.hs.mallchat.common.chat.dao.*;
 import com.hs.mallchat.common.chat.domain.entity.*;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
@@ -17,6 +15,7 @@ import com.hs.mallchat.common.chat.service.cache.RoomGroupCache;
 import com.hs.mallchat.common.chat.service.strategy.msg.AbstractMsgHandler;
 import com.hs.mallchat.common.chat.service.strategy.msg.MsgHandlerFactory;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
+import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.event.MessageSendEvent;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.user.service.cache.UserCache;
@@ -57,6 +56,8 @@ public class ChatServiceImpl implements ChatService {
     private ApplicationEventPublisher applicationEventPublisher;
     @Autowired
     private UserCache userCache;
+    @Autowired
+    private ContactDao contactDao;
 
 
     /**
@@ -112,6 +113,36 @@ public class ChatServiceImpl implements ChatService {
         // Collections.singletonList 是 Java 集合框架中的一个静态工厂方法，它被定义在 java.util.Collections 类中。这个方法用于创建一个固定大小的列表，这个列表只能包含一个元素，
         // 并且是不可变的（immutable）。这意味着一旦你通过 singletonList 创建了一个列表，你就不能向其中添加、删除或修改元素。
         return CollUtil.getFirst(getMsgRespBatch(Collections.singletonList(message), receiveUid));
+    }
+
+    /**
+     * 获取消息列表
+     *
+     * @param request
+     * @param receiveUid
+     * @return
+     */
+    @Override
+    public CursorPageBaseResp<ChatMessageResp> getMsgPage(ChatMessagePageReq request, Long receiveUid) {
+        // 用最后一条消息的id，来限制被踢出的人能看见的最大一条消息
+        Long lastMsgId = getLastMsgId(request.getRoomId(), receiveUid);
+        CursorPageBaseResp<Message> cursorPage = messageDao.getCursorPage(request.getRoomId(), request, lastMsgId);
+        if (cursorPage.isEmpty()) {
+            return CursorPageBaseResp.empty();
+        }
+        return CursorPageBaseResp.init(cursorPage, getMsgRespBatch(cursorPage.getList(), receiveUid));
+    }
+
+    private Long getLastMsgId(Long roomId, Long receiveUid) {
+        // 在抽象类AbstractRedisStringCache和子类共同实现添加到redis缓存的操作
+        Room room = roomCache.get(roomId);
+        AssertUtil.isNotEmpty(room, "房间号有误");
+        if (room.isHotRoom()) {
+            return null;
+        }
+        AssertUtil.isNotEmpty(receiveUid, "请先登录");
+        Contact contact = contactDao.get(receiveUid, roomId);
+        return contact.getLastMsgId();
     }
 
     /**

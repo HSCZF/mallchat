@@ -1,20 +1,23 @@
 package com.hs.mallchat.common.chat.controller;
 
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.chat.service.ChatService;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
+import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.utils.RequestHolder;
+import com.hs.mallchat.common.user.domain.enums.BlackTypeEnum;
+import com.hs.mallchat.common.user.service.cache.UserCache;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Description: 群聊相关接口
@@ -30,6 +33,25 @@ public class ChatController {
 
     @Autowired
     private ChatService chatService;
+    @Autowired
+    private UserCache userCache;
+
+    @GetMapping("/public/msg/page")
+    @ApiOperation("消息列表")
+    public ApiResult<CursorPageBaseResp<ChatMessageResp>> getMsgPage(@Valid ChatMessagePageReq request) {
+        CursorPageBaseResp<ChatMessageResp> msgPage = chatService.getMsgPage(request, RequestHolder.get().getUid());
+        filterBlackMsg(msgPage);
+        return ApiResult.success(msgPage);
+    }
+
+    private void filterBlackMsg(CursorPageBaseResp<ChatMessageResp> memberPage) {
+        Set<String> blackMembers = getBlackUidSet();
+        memberPage.getList().removeIf(a -> blackMembers.contains(a.getFromUser().getUid().toString()));
+    }
+
+    private Set<String> getBlackUidSet() {
+        return userCache.getBlackMap().getOrDefault(BlackTypeEnum.UID.getType(), new HashSet<>());
+    }
 
     /**
      * 发消息
