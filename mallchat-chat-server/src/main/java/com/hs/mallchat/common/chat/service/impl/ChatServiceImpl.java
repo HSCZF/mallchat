@@ -2,8 +2,12 @@ package com.hs.mallchat.common.chat.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import com.hs.mallchat.common.chat.dao.*;
 import com.hs.mallchat.common.chat.domain.entity.*;
+import com.hs.mallchat.common.chat.domain.enums.MessageTypeEnum;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
@@ -14,10 +18,13 @@ import com.hs.mallchat.common.chat.service.cache.RoomCache;
 import com.hs.mallchat.common.chat.service.cache.RoomGroupCache;
 import com.hs.mallchat.common.chat.service.strategy.msg.AbstractMsgHandler;
 import com.hs.mallchat.common.chat.service.strategy.msg.MsgHandlerFactory;
+import com.hs.mallchat.common.chat.service.strategy.msg.RecallMsgHandler;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.event.MessageSendEvent;
 import com.hs.mallchat.common.common.utils.AssertUtil;
+import com.hs.mallchat.common.user.domain.enums.RoleEnum;
+import com.hs.mallchat.common.user.service.IRoleService;
 import com.hs.mallchat.common.user.service.cache.UserCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +32,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +63,10 @@ public class ChatServiceImpl implements ChatService {
     private UserCache userCache;
     @Autowired
     private ContactDao contactDao;
+    @Autowired
+    private IRoleService iRoleService;
+    @Autowired
+    private RecallMsgHandler recallMsgHandler;
 
 
     /**
@@ -156,6 +165,28 @@ public class ChatServiceImpl implements ChatService {
     public ChatMessageResp getMsgResp(Long msgId, Long receiveUid) {
         Message msg = messageDao.getById(msgId);
         return getMsgResp(msg, receiveUid);
+    }
+
+    @Override
+    public void recallMsg(Long uid, ChatMessageBaseReq request) {
+        Message message = messageDao.getById(request.getMsgId());
+        // 校验能不能执行撤回
+        checkRecall(uid, message);
+        // 执行消息撤回
+        recallMsgHandler.recall(uid, message);
+    }
+
+    private void checkRecall(Long uid, Message message) {
+        AssertUtil.isNotEmpty(message, "消息有误");
+        AssertUtil.notEqual(message.getType(), MessageTypeEnum.RECALL.getType(), "消息无法撤回");
+        boolean hasPower = iRoleService.hasPower(uid, RoleEnum.CHAT_MANAGER);
+        if (hasPower) {
+            return;
+        }
+        boolean self = Objects.equals(uid, message.getFromUid());
+        AssertUtil.isTrue(self, "抱歉,您没有权限");
+        long between = DateUtil.between(message.getCreateTime(), new Date(), DateUnit.MINUTE);
+        AssertUtil.isTrue(between < 2, "超过2分钟的消息不能撤回");
     }
 
     @Override

@@ -1,13 +1,19 @@
 package com.hs.mallchat.common.chat.service.strategy.msg;
 
 import com.hs.mallchat.common.chat.dao.MessageDao;
+import com.hs.mallchat.common.chat.domain.dto.ChatMsgRecallDTO;
 import com.hs.mallchat.common.chat.domain.entity.Message;
 import com.hs.mallchat.common.chat.domain.entity.msg.FileMsgDTO;
 import com.hs.mallchat.common.chat.domain.entity.msg.MessageExtra;
+import com.hs.mallchat.common.chat.domain.entity.msg.MsgRecall;
 import com.hs.mallchat.common.chat.domain.enums.MessageTypeEnum;
+import com.hs.mallchat.common.common.event.MessageRecallEvent;
+import com.hs.mallchat.common.user.service.cache.UserCache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.Optional;
 
 /**
@@ -21,6 +27,10 @@ public class RecallMsgHandler extends AbstractMsgHandler<Object> {
 
     @Autowired
     private MessageDao messageDao;
+    @Autowired
+    private UserCache userCache;
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 获取消息类型枚举。
@@ -73,6 +83,14 @@ public class RecallMsgHandler extends AbstractMsgHandler<Object> {
 
     public void recall(Long recallUid, Message message) {
         //todo 消息覆盖问题用版本号解决
+        MessageExtra extra = message.getExtra();
+        extra.setRecall(new MsgRecall(recallUid, new Date()));
+        Message update = new Message();
+        update.setId(message.getId());
+        update.setType(MessageTypeEnum.RECALL.getType());
+        update.setExtra(extra);
+        messageDao.updateById(update);
+        applicationEventPublisher.publishEvent(new MessageRecallEvent(this, new ChatMsgRecallDTO(message.getId(), message.getRoomId(), recallUid)));
     }
 
     /**

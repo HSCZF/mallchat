@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.user.service.adapter;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.hs.mallchat.common.chat.domain.dto.ChatMsgRecallDTO;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.chat.service.ChatService;
@@ -50,6 +51,15 @@ public class WSAdapter {
     public static WSBaseResp buildScanSuccessResp() {
         WSBaseResp wsBaseResp = new WSBaseResp();
         wsBaseResp.setType(WSRespTypeEnum.LOGIN_SCAN_SUCCESS.getType());
+        return wsBaseResp;
+    }
+
+    public static WSBaseResp<?> buildMsgRecall(ChatMsgRecallDTO recallDTO) {
+        WSBaseResp<WSMsgRecall> wsBaseResp = new WSBaseResp<>();
+        wsBaseResp.setType(WSRespTypeEnum.RECALL.getType());
+        WSMsgRecall recall = new WSMsgRecall();
+        BeanUtils.copyProperties(recallDTO, recall);
+        wsBaseResp.setData(recall);
         return wsBaseResp;
     }
 

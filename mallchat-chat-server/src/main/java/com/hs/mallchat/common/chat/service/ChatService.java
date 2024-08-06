@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.chat.service;
 
 import com.hs.mallchat.common.chat.domain.entity.Message;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
@@ -53,4 +54,6 @@ public interface ChatService {
      * @return
      */
     CursorPageBaseResp<ChatMessageResp> getMsgPage(ChatMessagePageReq request, @Nullable Long receiveUid);
+
+    void recallMsg(Long uid, ChatMessageBaseReq request);
 }
