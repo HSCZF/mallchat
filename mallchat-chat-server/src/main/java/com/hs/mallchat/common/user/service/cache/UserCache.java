@@ -86,7 +86,6 @@ public class UserCache {
 
 
     public List<Long> getUserModifyTime(List<Long> uidList) {
-        System.out.println("UserCache.getUserModifyTime");
         List<String> keys = uidList.stream()
                 .map(uid ->
                         RedisKey.getKey(RedisKey.USER_MODIFY_STRING, uid))

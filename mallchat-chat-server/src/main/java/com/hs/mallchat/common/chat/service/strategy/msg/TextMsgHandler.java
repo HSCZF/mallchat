@@ -14,6 +14,8 @@ import com.hs.mallchat.common.chat.service.adapter.MessageAdapter;
 import com.hs.mallchat.common.chat.service.cache.MsgCache;
 import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.common.utils.AssertUtil;
+import com.hs.mallchat.common.common.utils.discover.PrioritizedUrlDiscover;
+import com.hs.mallchat.common.common.utils.discover.domain.UrlInfo;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.domain.enums.RoleEnum;
 import com.hs.mallchat.common.user.service.IRoleService;
@@ -47,6 +49,8 @@ public class TextMsgHandler extends AbstractMsgHandler<TextMsgReq> {
     private UserInfoCache userInfoCache;
     @Autowired
     private IRoleService iRoleService;
+
+    private static final PrioritizedUrlDiscover URL_TITLE_DISCOVER = new PrioritizedUrlDiscover();
 
 
     /**
@@ -106,7 +110,9 @@ public class TextMsgHandler extends AbstractMsgHandler<TextMsgReq> {
             update.setGapCount(gapCount);
             update.setReplyMsgId(body.getReplyMsgId());
         }
-        // todo 判断消息url跳转，后续再做
+        // 判断消息url跳转
+        Map<String, UrlInfo> urlContentMap = URL_TITLE_DISCOVER.getUrlContentMap(body.getContent());
+        extra.setUrlContentMap(urlContentMap);
         // 艾特功能
         if (CollectionUtil.isNotEmpty(body.getAtUidList())) {
             extra.setAtUidList(body.getAtUidList());

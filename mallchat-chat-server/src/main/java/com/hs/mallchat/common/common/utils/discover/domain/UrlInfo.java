@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Description:
+ * Description: url详情
  *
  * @Author: CZF
  * @Create: 2024/7/22 - 17:03
