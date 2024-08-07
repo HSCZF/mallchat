@@ -8,6 +8,9 @@ import com.hs.mallchat.common.user.domain.enums.IdempotentEnum;
 import com.hs.mallchat.common.user.domain.enums.ItemEnum;
 import com.hs.mallchat.common.user.service.IUserBackpackService;
 import com.hs.mallchat.common.user.service.LoginService;
+import com.hs.mallchat.oss.MinIOTemplate;
+import com.hs.mallchat.oss.domain.OssReq;
+import com.hs.mallchat.oss.domain.OssResp;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
@@ -48,6 +51,8 @@ public class DaoTest {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
     @Autowired
     private IUserBackpackService iUserBackpackService;
+    @Autowired
+    private MinIOTemplate minIOTemplate;
 
     @Test
     public void jwt() {
@@ -55,10 +60,25 @@ public class DaoTest {
         System.out.println(login);
     }
 
+    /**
+     * 测试在minio下载文件
+     */
+    @Test
+    public void getUploadUrl() {
+        OssReq ossReq = OssReq.builder()
+                .fileName("test.jpeg")
+                .filePath("/test")
+                .autoPath(false)
+                .build();
+        OssResp preSignedObjectUrl = minIOTemplate.getPreSignedObjectUrl(ossReq);
+        System.out.println(preSignedObjectUrl);
+    }
+
     @Test
     public void testAcquireItemRedisson() {
         iUserBackpackService.acquireItem(UID, ItemEnum.PLANET.getId(), IdempotentEnum.UID, UID + "");
     }
+
 
     @Test
     public void test() {
