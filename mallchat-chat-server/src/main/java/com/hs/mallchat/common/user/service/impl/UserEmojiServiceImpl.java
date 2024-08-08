@@ -1,5 +1,6 @@
 package com.hs.mallchat.common.user.service.impl;
 
+import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.domain.vo.response.IdRespVO;
 import com.hs.mallchat.common.common.utils.AssertUtil;
@@ -38,6 +39,7 @@ public class UserEmojiServiceImpl implements UserEmojiService {
      * @return 表情包
      */
     @Override
+    @RedissonLock(key = "#uid")
     public ApiResult<IdRespVO> insert(UserEmojiReq req, Long uid) {
         int count = userEmojiDao.countByUid(uid);
         AssertUtil.isFalse(count > 30, "最多只能添加30个表情哦~~");
