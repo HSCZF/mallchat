@@ -12,6 +12,7 @@ import com.hs.mallchat.common.chat.domain.vo.request.msg.TextMsgReq;
 import com.hs.mallchat.common.chat.domain.vo.response.msg.TextMsgResp;
 import com.hs.mallchat.common.chat.service.adapter.MessageAdapter;
 import com.hs.mallchat.common.chat.service.cache.MsgCache;
+import com.hs.mallchat.common.common.algorithm.sensitiveWord.SensitiveWordBs;
 import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.common.utils.discover.PrioritizedUrlDiscover;
@@ -49,6 +50,8 @@ public class TextMsgHandler extends AbstractMsgHandler<TextMsgReq> {
     private UserInfoCache userInfoCache;
     @Autowired
     private IRoleService iRoleService;
+    @Autowired
+    private SensitiveWordBs sensitiveWordBs;
 
     private static final PrioritizedUrlDiscover URL_TITLE_DISCOVER = new PrioritizedUrlDiscover();
 
@@ -102,8 +105,7 @@ public class TextMsgHandler extends AbstractMsgHandler<TextMsgReq> {
         MessageExtra extra = Optional.ofNullable(msg.getExtra()).orElse(new MessageExtra());
         Message update = new Message();
         update.setId(msg.getId());
-        // todo 敏感词后续再做
-        update.setContent(body.getContent());
+        update.setContent(sensitiveWordBs.filter(body.getContent()));
         update.setExtra(extra);
         if (Objects.nonNull(body.getReplyMsgId())) {
             Integer gapCount = messageDao.getGapCount(msg.getRoomId(), body.getReplyMsgId(), msg.getId());

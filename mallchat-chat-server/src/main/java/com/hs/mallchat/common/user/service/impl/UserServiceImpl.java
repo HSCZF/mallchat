@@ -1,5 +1,6 @@
 package com.hs.mallchat.common.user.service.impl;
 
+import com.hs.mallchat.common.common.algorithm.sensitiveWord.SensitiveWordBs;
 import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.event.UserBlackEvent;
 import com.hs.mallchat.common.common.event.UserRegisterEvent;
@@ -65,6 +66,8 @@ public class UserServiceImpl implements UserService {
     private ApplicationEventPublisher applicationEventPublisher;
     @Autowired
     private BlackDao blackDao;
+    @Autowired
+    private SensitiveWordBs sensitiveWordBs;
 
 
 
@@ -209,6 +212,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @RedissonLock(key = "#uid")
     public void modifyName(Long uid, String name) {
+        // 判断名字中有没有敏感词
+        AssertUtil.isFalse(sensitiveWordBs.hasSensitiveWord(name), "名字中包含敏感词，请重新输入");
         User oldUser = userDao.getByName(name);
         AssertUtil.isEmpty(oldUser, "改名失败，改名用户名已存在");
         UserBackpack modifyNameItem = userBackpackDao.getFirstValidItem(uid, ItemEnum.MODIFY_NAME_CARD.getId());
