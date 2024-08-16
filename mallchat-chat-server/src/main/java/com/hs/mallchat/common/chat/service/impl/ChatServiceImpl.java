@@ -6,8 +6,10 @@ import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import com.hs.mallchat.common.chat.dao.*;
 import com.hs.mallchat.common.chat.domain.entity.*;
+import com.hs.mallchat.common.chat.domain.enums.MessageMarkActTypeEnum;
 import com.hs.mallchat.common.chat.domain.enums.MessageTypeEnum;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMarkReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
@@ -16,9 +18,12 @@ import com.hs.mallchat.common.chat.service.ChatService;
 import com.hs.mallchat.common.chat.service.adapter.MessageAdapter;
 import com.hs.mallchat.common.chat.service.cache.RoomCache;
 import com.hs.mallchat.common.chat.service.cache.RoomGroupCache;
+import com.hs.mallchat.common.chat.service.strategy.mark.AbstractMsgMarkStrategy;
+import com.hs.mallchat.common.chat.service.strategy.mark.MsgMarkFactory;
 import com.hs.mallchat.common.chat.service.strategy.msg.AbstractMsgHandler;
 import com.hs.mallchat.common.chat.service.strategy.msg.MsgHandlerFactory;
 import com.hs.mallchat.common.chat.service.strategy.msg.RecallMsgHandler;
+import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.event.MessageSendEvent;
@@ -165,6 +170,20 @@ public class ChatServiceImpl implements ChatService {
     public ChatMessageResp getMsgResp(Long msgId, Long receiveUid) {
         Message msg = messageDao.getById(msgId);
         return getMsgResp(msg, receiveUid);
+    }
+
+    @Override
+    @RedissonLock(key = "#uid")
+    public void setMsgMark(Long uid, ChatMessageMarkReq request) {
+        AbstractMsgMarkStrategy strategy = MsgMarkFactory.getStrategyNoNull(request.getMarkType());
+        switch (MessageMarkActTypeEnum.of(request.getActType())) {
+            case MARK:
+                strategy.mark(uid, request.getMsgId());
+                break;
+            case UN_MARK:
+                strategy.unMark(uid, request.getMsgId());
+                break;
+        }
     }
 
     @Override

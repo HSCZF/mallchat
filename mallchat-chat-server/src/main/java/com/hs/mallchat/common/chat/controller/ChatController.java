@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.chat.controller;
 
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMarkReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
@@ -64,6 +65,13 @@ public class ChatController {
         // todo 先不加自定义注解FrequencyControl，后面再加
         Long msgId = chatService.sendMsg(request, RequestHolder.get().getUid());
         return ApiResult.success(chatService.getMsgResp(msgId, RequestHolder.get().getUid()));
+    }
+
+    @PutMapping("/msg/mark")
+    @ApiOperation("消息标记")
+    public ApiResult<Void> setMsgMark(@Valid @RequestBody ChatMessageMarkReq request) {
+        chatService.setMsgMark(RequestHolder.get().getUid(), request);
+        return ApiResult.success();
     }
 
     @PutMapping("/msg/recall")
