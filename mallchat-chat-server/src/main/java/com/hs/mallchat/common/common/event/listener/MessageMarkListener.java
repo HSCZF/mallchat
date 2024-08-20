@@ -43,7 +43,6 @@ public class MessageMarkListener {
     @Async
     @TransactionalEventListener(classes = MessageMarkEvent.class, fallbackExecution = true)
     public void changeMsgType(MessageMarkEvent event) {
-        System.out.println("消息标记监听器-changeMsgType");
         ChatMessageMarkDTO dto = event.getDto();
         Message msg = messageDao.getById(dto.getMsgId());
         if (!Objects.equals(msg.getType(), MessageTypeEnum.TEXT.getType())) {//普通消息才需要升级
@@ -63,7 +62,6 @@ public class MessageMarkListener {
     @Async
     @TransactionalEventListener(classes = MessageMarkEvent.class, fallbackExecution = true)
     public void notifyAll(MessageMarkEvent event) {
-        System.out.println("消息标记监听器-notifyAll");
         ChatMessageMarkDTO dto = event.getDto();
         Integer markCount = messageMarkDao.getMarkCount(dto.getMsgId(), dto.getMarkType());
         pushService.sendPushMsg(WSAdapter.buildMsgMarkSend(dto, markCount));

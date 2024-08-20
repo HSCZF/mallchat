@@ -6,7 +6,10 @@ import com.hs.mallchat.common.chat.domain.enums.HotFlagEnum;
 import com.hs.mallchat.common.chat.domain.enums.RoomTypeEnum;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,5 +48,18 @@ public class ChatAdapter {
         roomFriend.setRoomKey(generateRoomKey(uidList));
         roomFriend.setStatus(NormalOrNoEnum.NORMAL.getStatus());
         return roomFriend;
+    }
+
+    public static Set<Long> getFriendUidSet(Collection<RoomFriend> values, Long uid) {
+        return values.stream()
+                .map(a -> getFriendUid(a, uid))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 获取好友uid
+     */
+    public static Long getFriendUid(RoomFriend roomFriend, Long uid) {
+        return Objects.equals(uid, roomFriend.getUid1()) ? roomFriend.getUid2() : roomFriend.getUid1();
     }
 }

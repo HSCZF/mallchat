@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.common.utils;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.StrUtil;
 import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
@@ -8,10 +9,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.data.redis.core.ZSetOperations;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @Author: CZF
@@ -21,20 +27,40 @@ import java.util.function.Consumer;
  */
 public class CursorUtils {
 
+    public static <T> CursorPageBaseResp<Pair<T, Double>> getCursorPageByRedis(CursorPageBaseReq cursorPageBaseReq, String redisKey, Function<String, T> typeConvert) {
+        Set<ZSetOperations.TypedTuple<String>> typedTuples;
+        if (StrUtil.isBlank(cursorPageBaseReq.getCursor())) {//第一次
+            typedTuples = RedisUtils.zReverseRangeWithScores(redisKey, cursorPageBaseReq.getPageSize());
+        } else {
+            typedTuples = RedisUtils.zReverseRangeByScoreWithScores(redisKey, Double.parseDouble(cursorPageBaseReq.getCursor()), cursorPageBaseReq.getPageSize());
+        }
+        List<Pair<T, Double>> result = typedTuples
+                .stream()
+                .map(t -> Pair.of(typeConvert.apply(t.getValue()), t.getScore()))
+                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue()))
+                .collect(Collectors.toList());
+        String cursor = Optional.ofNullable(CollectionUtil.getLast(result))
+                .map(Pair::getValue)
+                .map(String::valueOf)
+                .orElse(null);
+        Boolean isLast = result.size() != cursorPageBaseReq.getPageSize();
+        return new CursorPageBaseResp<>(cursor, isLast, result);
+    }
+
     /**
      * 根据游标和请求参数，执行游标分页查询，并返回查询结果。
      *
-     * @param mapper        Mybatis Plus的IService接口实现，用于执行查询。
-     * @param request       分页请求参数，包含游标信息和分页条件。
-     * @param initWrapper   查询条件初始化回调，用于进一步定制查询条件。
-     * @param cursorColumn  游标字段，用于指定按照哪个字段进行游标比较。
-     * @param <T>           数据实体类型。
+     * @param mapper       Mybatis Plus的IService接口实现，用于执行查询。
+     * @param request      分页请求参数，包含游标信息和分页条件。
+     * @param initWrapper  查询条件初始化回调，用于进一步定制查询条件。
+     * @param cursorColumn 游标字段，用于指定按照哪个字段进行游标比较。
+     * @param <T>          数据实体类型。
      * @return 游标分页响应对象，包含查询结果、游标和是否为最后一页的信息。
      */
     public static <T> CursorPageBaseResp<T> getCursorPageByMysql(IService<T> mapper,
-                                                                        CursorPageBaseReq request,
-                                                                        Consumer<LambdaQueryWrapper<T>> initWrapper,
-                                                                        SFunction<T, ?> cursorColumn) {
+                                                                 CursorPageBaseReq request,
+                                                                 Consumer<LambdaQueryWrapper<T>> initWrapper,
+                                                                 SFunction<T, ?> cursorColumn) {
         // 游标字段的类型
         Class<?> cursorType = LambdaUtils.getReturnType(cursorColumn);
         LambdaQueryWrapper<T> wrapper = new LambdaQueryWrapper<>();

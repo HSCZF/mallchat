@@ -11,6 +11,7 @@ import com.hs.mallchat.common.common.utils.CursorUtils;
 import com.sun.org.apache.regexp.internal.RE;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -44,6 +45,13 @@ public class MessageDao extends ServiceImpl<MessageMapper, Message> {
                 .eq(Message::getRoomId, roomId)
                 .gt(Message::getId, fromId)
                 .le(Message::getId, toId)
+                .count();
+    }
+
+    public Integer getUnReadCount(Long roomId, Date readTime) {
+        return lambdaQuery()
+                .eq(Message::getRoomId, roomId)
+                .gt(Objects.nonNull(readTime), Message::getCreateTime, readTime)
                 .count();
     }
 }

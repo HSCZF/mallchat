@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,7 +64,8 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public RoomFriend getFriendRoom(Long uid1, Long uid2) {
-        return null;
+        String key = ChatAdapter.generateRoomKey(Arrays.asList(uid1, uid2));
+        return roomFriendDao.getByKey(key);
     }
 
     /**
@@ -73,7 +75,10 @@ public class RoomServiceImpl implements RoomService {
      */
     @Override
     public void disableFriendRoom(List<Long> uidList) {
-
+        AssertUtil.isNotEmpty(uidList, "房间创建失败，还有数量不对");
+        AssertUtil.equal(uidList.size(), 2, "房间创建失败，好友数量不对");
+        String key = ChatAdapter.generateRoomKey(uidList);
+        roomFriendDao.disableRoom(key);
     }
 
     /**

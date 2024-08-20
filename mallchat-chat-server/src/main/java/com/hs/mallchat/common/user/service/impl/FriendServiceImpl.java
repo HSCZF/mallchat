@@ -173,8 +173,7 @@ public class FriendServiceImpl implements FriendService {
                 .map(UserFriend::getId)
                 .collect(Collectors.toList());
         userFriendDao.removeByIds(friendRecordIds);
-        // todo 禁用房间
-
+        roomService.disableFriendRoom(Arrays.asList(uid, friendUid));
     }
 
     private void createFriend(Long uid, Long targetUid) {
