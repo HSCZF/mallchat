@@ -49,11 +49,26 @@ public class CursorUtils {
 
     /**
      * 根据游标和请求参数，执行游标分页查询，并返回查询结果。
-     *
+     * 例如：return CursorUtils.getCursorPageByMysql(this, cursorPageBaseReq, wrapper -> {
+     *             wrapper.eq(Contact::getRoomId, message.getRoomId());
+     *             wrapper.ne(Contact::getUid, message.getFromUid());// 不需要查询出自己
+     *             wrapper.ge(Contact::getReadTime, message.getCreateTime());// 已读时间大于等于消息发送时间
+     *         }, Contact::getReadTime);
+     *  wrapper是查询条件的参数，相当于这里的initWrapper
+     *  LambdaQueryWrapper<Contact> wrapper = Wrappers.lambdaQuery();
+     *     wrapper.eq(Contact::getRoomId, message.getRoomId());
+     *     wrapper.ne(Contact::getUid, message.getFromUid());
+     *     wrapper.ge(Contact::getReadTime, message.getCreateTime());
+     *  return CursorUtils.getCursorPageByMysql(
+     *      contactService, // IService接口实现
+     *      cursorPageBaseReq, // 分页请求参数
+     *      wrapper, // 已初始化的LambdaQueryWrapper
+     *      Contact::getReadTime // 游标排序字段
+     *    );
      * @param mapper       Mybatis Plus的IService接口实现，用于执行查询。
      * @param request      分页请求参数，包含游标信息和分页条件。
      * @param initWrapper  查询条件初始化回调，用于进一步定制查询条件。
-     * @param cursorColumn 游标字段，用于指定按照哪个字段进行游标比较。
+     * @param cursorColumn SFunction<T, ?> cursorColumn 是一个泛型函数式接口，游标字段，用于指定按照哪个字段进行游标比较。
      * @param <T>          数据实体类型。
      * @return 游标分页响应对象，包含查询结果、游标和是否为最后一页的信息。
      */

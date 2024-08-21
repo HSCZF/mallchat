@@ -1,15 +1,15 @@
 package com.hs.mallchat.common.chat.service;
 
+import com.hs.mallchat.common.chat.domain.dto.MsgReadInfoDTO;
 import com.hs.mallchat.common.chat.domain.entity.Message;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMarkReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
+import com.hs.mallchat.common.chat.domain.vo.request.*;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
+import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageReadResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 
 
 /**
@@ -59,4 +59,10 @@ public interface ChatService {
     void recallMsg(Long uid, ChatMessageBaseReq request);
 
     void setMsgMark(Long uid, ChatMessageMarkReq request);
+
+    CursorPageBaseResp<ChatMessageReadResp> getReadPage(Long uid, ChatMessageReadReq request);
+
+    Collection<MsgReadInfoDTO> getMsgReadInfo(Long uid, ChatMessageReadInfoReq request);
+
+    void msgRead(Long uid, ChatMessageMemberReq request);
 }

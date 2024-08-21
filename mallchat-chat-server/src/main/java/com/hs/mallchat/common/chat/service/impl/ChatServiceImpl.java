@@ -5,17 +5,18 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import com.hs.mallchat.common.chat.dao.*;
+import com.hs.mallchat.common.chat.domain.dto.MsgReadInfoDTO;
 import com.hs.mallchat.common.chat.domain.entity.*;
 import com.hs.mallchat.common.chat.domain.enums.MessageMarkActTypeEnum;
 import com.hs.mallchat.common.chat.domain.enums.MessageTypeEnum;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMarkReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
+import com.hs.mallchat.common.chat.domain.vo.request.*;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
+import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageReadResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.chat.service.ChatService;
+import com.hs.mallchat.common.chat.service.ContactService;
 import com.hs.mallchat.common.chat.service.adapter.MessageAdapter;
+import com.hs.mallchat.common.chat.service.adapter.RoomAdapter;
 import com.hs.mallchat.common.chat.service.cache.RoomCache;
 import com.hs.mallchat.common.chat.service.cache.RoomGroupCache;
 import com.hs.mallchat.common.chat.service.strategy.mark.AbstractMsgMarkStrategy;
@@ -37,6 +38,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,6 +74,8 @@ public class ChatServiceImpl implements ChatService {
     private IRoleService iRoleService;
     @Autowired
     private RecallMsgHandler recallMsgHandler;
+    @Autowired
+    private ContactService contactService;
 
 
     /**
@@ -236,5 +240,49 @@ public class ChatServiceImpl implements ChatService {
         List<MessageMark> msgMark = messageMarkDao.getValidMarkByMsgIdBatch(messages.stream().map(Message::getId).collect(Collectors.toList()));
         // 使用查询到的消息标记和原始消息列表，以及接收用户的ID，构建消息响应对象列表。
         return MessageAdapter.buildMsgSave(messages, msgMark, receiveUid);
+    }
+
+    @Override
+    public CursorPageBaseResp<ChatMessageReadResp> getReadPage(@Nullable Long uid, ChatMessageReadReq request) {
+        Message message = messageDao.getById(request.getMsgId());
+        AssertUtil.isNotEmpty(message, "消息id有误");
+        AssertUtil.equal(uid, message.getFromUid(), "只能查看自己的消息");
+        CursorPageBaseResp<Contact> page;
+        if (request.getSearchType() == 1) { //已读
+            page = contactDao.getReadPage(message, request);
+        } else {
+            page = contactDao.getUnReadPage(message, request);
+        }
+        if (CollectionUtil.isEmpty(page.getList())) {
+            return CursorPageBaseResp.empty();
+        }
+        return CursorPageBaseResp.init(page, RoomAdapter.buildReadResp(page.getList()));
+    }
+
+    @Override
+    public Collection<MsgReadInfoDTO> getMsgReadInfo(Long uid, ChatMessageReadInfoReq request) {
+        List<Message> messages = messageDao.listByIds(request.getMsgIds());
+        messages.forEach(message -> {
+            AssertUtil.equal(uid, message.getFromUid(), "只能查询自己发送的消息");
+        });
+        return contactService.getMsgReadInfo(messages).values();
+    }
+
+    @Override
+    @RedissonLock(key = "#uid")
+    public void msgRead(Long uid, ChatMessageMemberReq request) {
+        Contact contact = contactDao.get(uid, request.getRoomId());
+        if (Objects.nonNull(contact)) {
+            Contact update = new Contact();
+            update.setId(contact.getId());
+            update.setReadTime(new Date());
+            contactDao.updateById(update);
+        } else {
+            Contact insert = new Contact();
+            insert.setUid(uid);
+            insert.setRoomId(request.getRoomId());
+            insert.setReadTime(new Date());
+            contactDao.save(insert);
+        }
     }
 }

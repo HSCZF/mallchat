@@ -1,9 +1,8 @@
 package com.hs.mallchat.common.chat.controller;
 
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageBaseReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMarkReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessagePageReq;
-import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReq;
+import com.hs.mallchat.common.chat.domain.dto.MsgReadInfoDTO;
+import com.hs.mallchat.common.chat.domain.vo.request.*;
+import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageReadResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.chat.service.ChatService;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -78,6 +78,28 @@ public class ChatController {
     @ApiOperation("撤回消息")
     public ApiResult<Void> recallMsg(@Valid @RequestBody ChatMessageBaseReq request) {
         chatService.recallMsg(RequestHolder.get().getUid(), request);
+        return ApiResult.success();
+    }
+
+    @GetMapping("/msg/read/page")
+    @ApiOperation("消息的已读未读列表")
+    public ApiResult<CursorPageBaseResp<ChatMessageReadResp>> getReadPage(@Valid ChatMessageReadReq request) {
+        Long uid = RequestHolder.get().getUid();
+        return ApiResult.success(chatService.getReadPage(uid, request));
+    }
+
+    @GetMapping("/msg/read")
+    @ApiOperation("获取消息的已读未读总数")
+    public ApiResult<Collection<MsgReadInfoDTO>> getReadInfo(@Valid ChatMessageReadInfoReq request) {
+        Long uid = RequestHolder.get().getUid();
+        return ApiResult.success(chatService.getMsgReadInfo(uid, request));
+    }
+
+    @PutMapping("/msg/read")
+    @ApiOperation("消息阅读上报")
+    public ApiResult<Void> msgRead(@Valid @RequestBody ChatMessageMemberReq request) {
+        Long uid = RequestHolder.get().getUid();
+        chatService.msgRead(uid, request);
         return ApiResult.success();
     }
 
