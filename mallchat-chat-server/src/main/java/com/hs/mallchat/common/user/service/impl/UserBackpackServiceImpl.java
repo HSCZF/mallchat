@@ -2,6 +2,7 @@ package com.hs.mallchat.common.user.service.impl;
 
 import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.domain.enums.YesOrNoEnum;
+import com.hs.mallchat.common.common.event.ItemReceiveEvent;
 import com.hs.mallchat.common.common.service.LockService;
 import com.hs.mallchat.common.user.dao.UserBackpackDao;
 import com.hs.mallchat.common.user.domain.entity.UserBackpack;
@@ -9,6 +10,7 @@ import com.hs.mallchat.common.user.domain.enums.IdempotentEnum;
 import com.hs.mallchat.common.user.service.IUserBackpackService;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,8 @@ public class UserBackpackServiceImpl implements IUserBackpackService {
     @Autowired
     @Lazy
     private UserBackpackServiceImpl userBackpackService;
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
 //    /**
 //     * 分布式-编程式
@@ -72,14 +76,14 @@ public class UserBackpackServiceImpl implements IUserBackpackService {
 
     /**
      * 用户获取物品的接口。
-     *
+     * <p>
      * 本方法用于处理用户获取特定物品的逻辑。通过传入用户ID、物品ID和幂等性标识，确保同一用户对同一物品的获取操作是幂等的。
      * 即多次调用对系统的影响与调用一次相同。幂等性通过生成唯一的幂等键来实现，该键基于物品ID、幂等性枚举和业务ID生成。
      *
-     * @param uid 用户的唯一标识。用于指定物品获取操作的用户。
-     * @param itemId 物品的唯一标识。指定用户要获取的物品。
+     * @param uid            用户的唯一标识。用于指定物品获取操作的用户。
+     * @param itemId         物品的唯一标识。指定用户要获取的物品。
      * @param idempotentEnum 幂等性枚举。用于指示如何生成幂等键，以避免重复操作。
-     * @param businessId 业务标识。可以是订单ID或其他业务流程的标识，用于生成幂等键，确保在同一个业务流程中操作的幂等性。
+     * @param businessId     业务标识。可以是订单ID或其他业务流程的标识，用于生成幂等键，确保在同一个业务流程中操作的幂等性。
      */
     @Override
     public void acquireItem(Long uid, Long itemId, IdempotentEnum idempotentEnum, String businessId) {
@@ -116,6 +120,8 @@ public class UserBackpackServiceImpl implements IUserBackpackService {
                 .idempotent(idempotent)
                 .build();
         userBackpackDao.save(newItem);
+        // 用户收到物品的事件
+        applicationEventPublisher.publishEvent(new ItemReceiveEvent(this, newItem));
     }
 
 

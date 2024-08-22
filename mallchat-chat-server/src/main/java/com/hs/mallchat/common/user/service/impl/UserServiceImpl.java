@@ -70,7 +70,6 @@ public class UserServiceImpl implements UserService {
     private SensitiveWordBs sensitiveWordBs;
 
 
-
     @Override
     public void wearingBadge(Long uid, Long itemId) {
         // 确保有徽章
@@ -81,6 +80,8 @@ public class UserServiceImpl implements UserService {
         AssertUtil.equal(itemConfig.getType(), ItemTypeEnum.BADGE.getType(), "只有徽章才能佩戴！");
         // 佩戴徽章
         userDao.wearingBadge(uid, itemId);
+        // 删除用户缓存
+        userCache.userInfoChange(uid);
     }
 
     /**
@@ -220,7 +221,10 @@ public class UserServiceImpl implements UserService {
         AssertUtil.isNotEmpty(modifyNameItem, "改名失败，改名卡不足，等送");
         boolean success = userBackpackDao.userItem(modifyNameItem);
         if (success) {
+            // 改名
             userDao.modifyName(uid, name);
+            // 删除缓存
+            userCache.userInfoChange(uid);
         }
     }
 

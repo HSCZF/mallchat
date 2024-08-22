@@ -132,6 +132,18 @@ public class UserCache {
         return map;
     }
 
+    public void userInfoChange(Long uid) {
+        delUserInfo(uid);
+        // 删除UserSummaryCache，前端下次懒加载的时候可以获取到最新的数据
+        userSummaryCache.delete(uid);
+        refreshUserModifyTime(uid);
+    }
+
+    private void delUserInfo(Long uid) {
+        String key = RedisKey.getKey(RedisKey.USER_TOKEN_STRING, uid);
+        RedisUtils.del(key);
+    }
+
     @Cacheable(cacheNames = "user", key = "'blackList'")
     public Map<Integer, Set<String>> getBlackMap() {
         Map<Integer, List<Black>> collect = blackDao.list()

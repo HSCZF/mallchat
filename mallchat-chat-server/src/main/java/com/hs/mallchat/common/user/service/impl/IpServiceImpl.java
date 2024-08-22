@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.user.service.impl;
 
 import cn.hutool.core.thread.NamedThreadFactory;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
@@ -10,6 +11,7 @@ import com.hs.mallchat.common.user.domain.entity.IpDetail;
 import com.hs.mallchat.common.user.domain.entity.IpInfo;
 import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.service.IpService;
+import com.hs.mallchat.common.user.service.cache.UserCache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.DisposableBean;
@@ -35,6 +37,8 @@ public class IpServiceImpl implements IpService, DisposableBean {
 
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private UserCache userCache;
 
     private static ExecutorService executor =
             new ThreadPoolExecutor(
@@ -55,7 +59,7 @@ public class IpServiceImpl implements IpService, DisposableBean {
                 return;
             }
             String ip = ipInfo.needRefreshIp();
-            if (StringUtils.isBlank(ip)) {
+            if (StrUtil.isBlank(ip)) {
                 return;
             }
             IpDetail ipDetail = tryGetIpDetailOrNullTreeTimes(ip);
@@ -65,6 +69,9 @@ public class IpServiceImpl implements IpService, DisposableBean {
                 update.setId(uid);
                 update.setIpInfo(ipInfo);
                 userDao.updateById(update);
+                userCache.userInfoChange(uid);
+            } else {
+                log.error("get ip detail fail ip:{},uid:{}", ip, uid);
             }
         });
     }
