@@ -29,6 +29,11 @@ import java.util.Objects;
 
 /**
  * Description： 发送消息更新房间收信箱，并同步给房间的成员信箱
+ * RocketMQ 消费者，只有topic是MQConstant.SEND_MSG_TOPIC一致，用于接收 SEND_MSG_TOPIC 主题的消息。
+ * 没有配置没有显式配置 messageModel 属性，RocketMQ 默认采用的是 CLUSTERING 模式：消息只会被消费组中的一个消费者消费。
+ * 代码一共有一个MQProducer类是生产者
+ * 4个消费者：MsgSendConsumer，MsgLoginConsumer，PushConsumer，ScanSuccessConsumer
+ * PushService类做统一的调用
  *
  * @Author: CZF
  * @Create: 2024/7/27 - 20:22

@@ -11,6 +11,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * Description: 在本地服务上找寻对应channel，将对应用户登陆，并触发所有用户收到上线事件
+ * RocketMQ 消费者，只有topic是MQConstant.LOGIN_MSG_TOPIC一致，用于接收 LOGIN_MSG_TOPIC 主题的消息。
+ * MessageModel.BROADCASTING（广播消费模式）：消息会被消费组中的所有消费者消费。
+ * 代码一共有一个MQProducer类是生产者
+ * 4个消费者：MsgSendConsumer，MsgLoginConsumer，PushConsumer，ScanSuccessConsumer
+ * PushService类做统一的调用
  *
  * @Author: CZF
  * @Create: 2024/7/31 - 16:16

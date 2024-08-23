@@ -9,7 +9,10 @@ import org.springframework.messaging.support.MessageBuilder;
 
 /**
  * Description: 发送mq工具类
- *
+ * RocketMQ 生产者，发送到不同的主题，消费者根据对应的主题进行消费
+ * 代码一共有一个MQProducer类是生产者
+ * 4个消费者：MsgSendConsumer，MsgLoginConsumer，PushConsumer，ScanSuccessConsumer
+ * PushService类做统一的调用
  * @Author: CZF
  * @Create: 2024/7/24 - 11:04
  */
