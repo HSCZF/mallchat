@@ -2,9 +2,11 @@ package com.hs.mallchat.common.chat.service.adapter;
 
 import com.hs.mallchat.common.chat.domain.entity.Room;
 import com.hs.mallchat.common.chat.domain.entity.RoomFriend;
+import com.hs.mallchat.common.chat.domain.entity.RoomGroup;
 import com.hs.mallchat.common.chat.domain.enums.HotFlagEnum;
 import com.hs.mallchat.common.chat.domain.enums.RoomTypeEnum;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
+import com.hs.mallchat.common.user.domain.entity.User;
 
 import java.util.Collection;
 import java.util.List;
@@ -61,5 +63,13 @@ public class ChatAdapter {
      */
     public static Long getFriendUid(RoomFriend roomFriend, Long uid) {
         return Objects.equals(uid, roomFriend.getUid1()) ? roomFriend.getUid2() : roomFriend.getUid1();
+    }
+
+    public static RoomGroup buildGroupRoom(User user, Long roomId) {
+        RoomGroup roomGroup = new RoomGroup();
+        roomGroup.setName(user.getName() + "的群组");
+        roomGroup.setAvatar(user.getAvatar());
+        roomGroup.setRoomId(roomId);
+        return roomGroup;
     }
 }

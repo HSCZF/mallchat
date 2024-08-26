@@ -1,5 +1,9 @@
 package com.hs.mallchat.common.chat.dao;
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.hs.mallchat.common.chat.domain.entity.Contact;
 import com.hs.mallchat.common.chat.domain.entity.Message;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReadReq;
@@ -10,6 +14,7 @@ import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.utils.CursorUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -34,6 +39,7 @@ public class ContactDao extends ServiceImpl<ContactMapper, Contact> {
                 .eq(Contact::getRoomId, roomId)
                 .one();
     }
+
 
     /**
      * 获取用户会话列表
@@ -84,4 +90,18 @@ public class ContactDao extends ServiceImpl<ContactMapper, Contact> {
                 .ge(Contact::getReadTime, message.getCreateTime())
                 .count();
     }
+
+    public Boolean removeByRoomId(Long roomId, List<Long> uidList) {
+        if (CollectionUtil.isNotEmpty(uidList)) {
+            LambdaQueryWrapper<Contact> wrapper = new QueryWrapper<Contact>().lambda()
+                    .eq(Contact::getRoomId, roomId)
+                    .in(Contact::getUid, uidList);
+            return this.remove(wrapper);
+        } else {
+            LambdaQueryWrapper<Contact> wrapper = new QueryWrapper<Contact>().lambda()
+                    .eq(Contact::getRoomId, roomId);
+            return this.remove(wrapper);
+        }
+    }
+
 }

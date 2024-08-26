@@ -4,21 +4,26 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Pair;
 import com.hs.mallchat.common.chat.dao.*;
 import com.hs.mallchat.common.chat.domain.dto.MsgReadInfoDTO;
 import com.hs.mallchat.common.chat.domain.entity.*;
+import com.hs.mallchat.common.chat.domain.enums.GroupRoleEnum;
 import com.hs.mallchat.common.chat.domain.enums.MessageMarkActTypeEnum;
 import com.hs.mallchat.common.chat.domain.enums.MessageTypeEnum;
 import com.hs.mallchat.common.chat.domain.vo.request.*;
+import com.hs.mallchat.common.chat.domain.vo.request.member.MemberReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageReadResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.chat.service.ChatService;
 import com.hs.mallchat.common.chat.service.ContactService;
+import com.hs.mallchat.common.chat.service.adapter.MemberAdapter;
 import com.hs.mallchat.common.chat.service.adapter.MessageAdapter;
 import com.hs.mallchat.common.chat.service.adapter.RoomAdapter;
 import com.hs.mallchat.common.chat.service.cache.RoomCache;
 import com.hs.mallchat.common.chat.service.cache.RoomGroupCache;
+import com.hs.mallchat.common.chat.service.helper.ChatMemberHelper;
 import com.hs.mallchat.common.chat.service.strategy.mark.AbstractMsgMarkStrategy;
 import com.hs.mallchat.common.chat.service.strategy.mark.MsgMarkFactory;
 import com.hs.mallchat.common.chat.service.strategy.msg.AbstractMsgHandler;
@@ -26,10 +31,15 @@ import com.hs.mallchat.common.chat.service.strategy.msg.MsgHandlerFactory;
 import com.hs.mallchat.common.chat.service.strategy.msg.RecallMsgHandler;
 import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
+import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.event.MessageSendEvent;
 import com.hs.mallchat.common.common.utils.AssertUtil;
+import com.hs.mallchat.common.user.dao.UserDao;
+import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.enums.ChatActiveStatusEnum;
 import com.hs.mallchat.common.user.domain.enums.RoleEnum;
+import com.hs.mallchat.common.user.domain.vo.response.ws.ChatMemberResp;
 import com.hs.mallchat.common.user.service.IRoleService;
 import com.hs.mallchat.common.user.service.cache.UserCache;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +86,10 @@ public class ChatServiceImpl implements ChatService {
     private RecallMsgHandler recallMsgHandler;
     @Autowired
     private ContactService contactService;
+    @Autowired
+    private UserDao userDao;
+    @Autowired
+    private RoomGroupDao roomGroupDao;
 
 
     /**
@@ -110,7 +124,8 @@ public class ChatServiceImpl implements ChatService {
         }
         if (room.isRoomGroup()) {
             RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
-            GroupMember member = groupMemberDao.getMember(roomGroup.getRoomId(), uid);
+            // bug修复：下面一行代码的第一个参数是roomGroup.getId()而不是roomGroup.getRoomId()
+            GroupMember member = groupMemberDao.getMember(roomGroup.getId(), uid);
             AssertUtil.isNotEmpty(member, "您已经被移除该群");
         }
     }
@@ -160,6 +175,22 @@ public class ChatServiceImpl implements ChatService {
         }
         AssertUtil.isNotEmpty(receiveUid, "请先登录");
         Contact contact = contactDao.get(receiveUid, roomId);
+        // 先检查contact是否为null
+        if (Objects.isNull(contact)) {
+            // 这个bug解决改造
+            // 这段if代码主要解决创建群组后的bug，创建群组后，系统会发送一条消息，但是contact表中的lastMsgId为null，导致后面获取消息列表时，会报错
+            // contact的表需要经过GroupMemberAddListener的sendAddMsg方法
+            // GroupMemberAddListener.sendAddMsg()->chatService.sendMsg()->applicationEventPublisher.publishEvent(new MessageSendEvent(this, msgId))
+            // ->MessageSendListener.messageRoute()->mqProducer发送topic名称为MQConstant.SEND_MSG_TOPIC，被MsgSendConsumerMQ消费者消费
+            // ->contactDao.refreshOrCreateActiveTime()进行执行数据库操作，此时新增群组的会话才有数据，所以contact.getLastMsgId()会null，就报错
+            Message message = messageDao.getByUidAndRoomId(roomId, User.UID_SYSTEM);
+            return message.getId();
+        } else if (Objects.isNull(contact.getLastMsgId())) {
+            // contact 不为 null，再检查 lastMsgId 是否为 null
+            Message message = messageDao.getByUidAndRoomId(roomId, User.UID_SYSTEM);
+            return message.getId();
+        }
+        // contact 不为 null，且 lastMsgId 不为 null，则直接返回 lastMsgId
         return contact.getLastMsgId();
     }
 
@@ -284,5 +315,45 @@ public class ChatServiceImpl implements ChatService {
             insert.setReadTime(new Date());
             contactDao.save(insert);
         }
+    }
+
+    /**
+     * 获取群成员列表
+     *
+     * @param memberUidList
+     * @param request
+     * @return
+     */
+    @Override
+    public CursorPageBaseResp<ChatMemberResp> getMemberPage(List<Long> memberUidList, MemberReq request) {
+        Pair<ChatActiveStatusEnum, String> pair = ChatMemberHelper.getCursorPair(request.getCursor());
+        ChatActiveStatusEnum activeStatusEnum = pair.getKey();
+        String timeCursor = pair.getValue();
+        List<ChatMemberResp> resultList = new ArrayList<>();
+        Boolean isLast = Boolean.FALSE;
+        if (activeStatusEnum == ChatActiveStatusEnum.ONLINE) {
+            CursorPageBaseResp<User> cursorPage = userDao.getCursorPage(memberUidList, new CursorPageBaseReq(request.getPageSize(), timeCursor), ChatActiveStatusEnum.ONLINE);
+            // 在线列表
+            resultList.addAll(MemberAdapter.buildMember(cursorPage.getList()));
+            if (cursorPage.getIsLast()) { // 如果是最后一页,从离线列表再补一点数据
+                activeStatusEnum = ChatActiveStatusEnum.OFFLINE;
+                Integer leftSize = request.getPageSize() - cursorPage.getList().size();
+                cursorPage = userDao.getCursorPage(memberUidList, new CursorPageBaseReq(leftSize, null), ChatActiveStatusEnum.OFFLINE);
+                // 添加离线列表
+                resultList.addAll(MemberAdapter.buildMember(cursorPage.getList()));
+            }
+        } else if (activeStatusEnum == ChatActiveStatusEnum.OFFLINE) {
+            CursorPageBaseResp<User> cursorPage = userDao.getCursorPage(memberUidList, new CursorPageBaseReq(request.getPageSize(), timeCursor), ChatActiveStatusEnum.OFFLINE);
+            resultList.addAll(MemberAdapter.buildMember(cursorPage.getList()));
+            timeCursor = cursorPage.getCursor();
+            isLast = cursorPage.getIsLast();
+        }
+        // 获取群成员角色ID
+        List<Long> uidList = resultList.stream().map(ChatMemberResp::getUid).collect(Collectors.toList());
+        RoomGroup roomGroup = roomGroupDao.getByRoomId(request.getRoomId());
+        Map<Long, Integer> uidMapRole = groupMemberDao.getMemberMapRole(roomGroup.getId(), uidList);
+        resultList.forEach(member -> member.setRoleId(uidMapRole.get(member.getUid())));
+        // 组装结果
+        return new CursorPageBaseResp<>(ChatMemberHelper.generateCursor(activeStatusEnum, timeCursor), isLast, resultList);
     }
 }

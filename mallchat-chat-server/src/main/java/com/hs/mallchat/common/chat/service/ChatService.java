@@ -3,13 +3,16 @@ package com.hs.mallchat.common.chat.service;
 import com.hs.mallchat.common.chat.domain.dto.MsgReadInfoDTO;
 import com.hs.mallchat.common.chat.domain.entity.Message;
 import com.hs.mallchat.common.chat.domain.vo.request.*;
+import com.hs.mallchat.common.chat.domain.vo.request.member.MemberReq;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberStatisticResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageReadResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
+import com.hs.mallchat.common.user.domain.vo.response.ws.ChatMemberResp;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -65,4 +68,13 @@ public interface ChatService {
     Collection<MsgReadInfoDTO> getMsgReadInfo(Long uid, ChatMessageReadInfoReq request);
 
     void msgRead(Long uid, ChatMessageMemberReq request);
+
+    /**
+     * 获取群成员列表
+     *
+     * @param memberUidList
+     * @param request
+     * @return
+     */
+    CursorPageBaseResp<ChatMemberResp> getMemberPage(List<Long> memberUidList, MemberReq request);
 }

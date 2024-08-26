@@ -1,12 +1,23 @@
 package com.hs.mallchat.common.chat.dao;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hs.mallchat.common.chat.domain.entity.GroupMember;
+import com.hs.mallchat.common.chat.domain.enums.GroupRoleEnum;
 import com.hs.mallchat.common.chat.mapper.GroupMemberMapper;
 import com.hs.mallchat.common.chat.service.IGroupMemberService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hs.mallchat.common.chat.service.cache.GroupMemberCache;
+import com.hs.mallchat.common.common.exception.ErrorEnum;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +30,10 @@ import java.util.stream.Collectors;
  */
 @Service
 public class GroupMemberDao extends ServiceImpl<GroupMemberMapper, GroupMember> {
+
+    @Resource
+    @Lazy
+    private GroupMemberCache groupMemberCache;
 
     public GroupMember getMember(Long groupId, Long uid) {
         return lambdaQuery()
@@ -34,5 +49,111 @@ public class GroupMemberDao extends ServiceImpl<GroupMemberMapper, GroupMember> 
                 .list();
         return list.stream().map(GroupMember::getUid).collect(Collectors.toList());
 
+    }
+
+    /**
+     * 批量获取成员群角色
+     *
+     * @param groupId 群ID
+     * @param uidList 用户列表
+     * @return 成员群角色列表
+     */
+    public Map<Long, Integer> getMemberMapRole(Long groupId, List<Long> uidList) {
+        List<GroupMember> list = lambdaQuery()
+                .eq(GroupMember::getGroupId, groupId)
+                .in(GroupMember::getUid, uidList)
+                .in(GroupMember::getRole, GroupRoleEnum.ADMIN_LIST)
+                .select(GroupMember::getUid, GroupMember::getRole)
+                .list();
+        return list.stream().collect(Collectors.toMap(GroupMember::getUid, GroupMember::getRole));
+    }
+
+    /**
+     * 是否是群主
+     *
+     * @param id  群组ID
+     * @param uid 用户ID
+     * @return 是否是群主
+     */
+    public boolean isLord(Long id, Long uid) {
+        GroupMember groupMember = this.lambdaQuery()
+                .eq(GroupMember::getGroupId, id)
+                .eq(GroupMember::getUid, uid)
+                .eq(GroupMember::getRole, GroupRoleEnum.LEADER.getType())
+                .one();
+        return ObjectUtil.isNotNull(groupMember);
+    }
+
+    /**
+     * 是否管理员
+     *
+     * @param id  群组ID
+     * @param uid 用户ID
+     * @return 是否是管理员
+     */
+    public boolean isManager(Long id, Long uid) {
+        GroupMember groupMember = this.lambdaQuery()
+                .eq(GroupMember::getGroupId, id)
+                .eq(GroupMember::getUid, uid)
+                .eq(GroupMember::getRole, GroupRoleEnum.MANAGER.getType())
+                .one();
+        return ObjectUtil.isNotNull(groupMember);
+    }
+
+    public List<GroupMember> getSelfGroup(Long uid) {
+        return lambdaQuery()
+                .eq(GroupMember::getUid, uid)
+                .eq(GroupMember::getRole, GroupRoleEnum.LEADER.getType())
+                .list();
+    }
+
+    /**
+     * 判断用户是否在房间中
+     *
+     * @param roomId  房间ID
+     * @param uidList 用户ID
+     * @return 是否在群聊中
+     */
+    public Boolean isGroupShip(Long roomId, List<Long> uidList) {
+        List<Long> memberUidList = groupMemberCache.getMemberUidList(roomId);
+        return new HashSet<>(memberUidList).containsAll(uidList);
+    }
+
+    /**
+     * 根据群组ID删除群成员
+     *
+     * @param groupId 群组ID
+     * @param uidList 群成员列表
+     * @return 是否删除成功
+     */
+    public Boolean removeByGroupId(Long groupId, List<Long> uidList) {
+        if (CollectionUtil.isNotEmpty(uidList)) {
+            LambdaQueryWrapper<GroupMember> wrapper = new QueryWrapper<GroupMember>()
+                    .lambda()
+                    .eq(GroupMember::getGroupId, groupId)
+                    .in(GroupMember::getUid, uidList);
+            return this.remove(wrapper);
+        } else {
+            LambdaQueryWrapper<GroupMember> wrapper = new QueryWrapper<GroupMember>()
+                    .lambda()
+                    .eq(GroupMember::getGroupId, groupId);
+            return this.remove(wrapper);
+        }
+    }
+
+    public List<Long> getMemberBatch(Long groupId, List<Long> uidList) {
+        List<GroupMember> list = lambdaQuery()
+                .eq(GroupMember::getGroupId, groupId)
+                .in(GroupMember::getUid, uidList)
+                .select(GroupMember::getUid)
+                .list();
+        return list.stream().map(GroupMember::getUid).collect(Collectors.toList());
+    }
+
+    public GroupMember getByGroupId(Long groupId, Integer leader) {
+        return lambdaQuery()
+                .eq(GroupMember::getGroupId, groupId)
+                .eq(GroupMember::getRole, leader)
+                .one();
     }
 }

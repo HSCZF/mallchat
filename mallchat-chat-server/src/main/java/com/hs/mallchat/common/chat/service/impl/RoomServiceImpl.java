@@ -4,14 +4,17 @@ import com.hs.mallchat.common.chat.dao.GroupMemberDao;
 import com.hs.mallchat.common.chat.dao.RoomDao;
 import com.hs.mallchat.common.chat.dao.RoomFriendDao;
 import com.hs.mallchat.common.chat.dao.RoomGroupDao;
+import com.hs.mallchat.common.chat.domain.entity.GroupMember;
 import com.hs.mallchat.common.chat.domain.entity.Room;
 import com.hs.mallchat.common.chat.domain.entity.RoomFriend;
 import com.hs.mallchat.common.chat.domain.entity.RoomGroup;
+import com.hs.mallchat.common.chat.domain.enums.GroupRoleEnum;
 import com.hs.mallchat.common.chat.domain.enums.RoomTypeEnum;
 import com.hs.mallchat.common.chat.service.RoomService;
 import com.hs.mallchat.common.chat.service.adapter.ChatAdapter;
 import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 import com.hs.mallchat.common.common.utils.AssertUtil;
+import com.hs.mallchat.common.user.domain.entity.User;
 import com.hs.mallchat.common.user.service.cache.UserInfoCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,8 +90,30 @@ public class RoomServiceImpl implements RoomService {
      * @param uid
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public RoomGroup createGroupRoom(Long uid) {
-        return null;
+        List<GroupMember> selfGroup = groupMemberDao.getSelfGroup(uid);
+        AssertUtil.isEmpty(selfGroup, "每个人只能创建一个群");
+        User user = userInfoCache.get(uid);
+        Room room = createRoom(RoomTypeEnum.GROUP);
+        //插入群
+        RoomGroup roomGroup = ChatAdapter.buildGroupRoom(user, room.getId());
+        roomGroupDao.save(roomGroup);
+        //插入群主
+        GroupMember leader = GroupMember.builder()
+                .role(GroupRoleEnum.LEADER.getType())
+                .groupId(roomGroup.getId())
+                .uid(uid)
+                .build();
+        groupMemberDao.save(leader);
+        // 插入“系统消息”
+        GroupMember systemUser = GroupMember.builder()
+                .role(GroupRoleEnum.MEMBER.getType())
+                .groupId(roomGroup.getId())
+                .uid(User.UID_SYSTEM)
+                .build();
+        groupMemberDao.save(systemUser);
+        return roomGroup;
     }
 
     private RoomFriend createFriendRoom1(Long roomId, List<Long> uidList) {

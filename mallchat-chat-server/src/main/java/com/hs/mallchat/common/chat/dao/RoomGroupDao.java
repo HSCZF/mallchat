@@ -1,9 +1,12 @@
 package com.hs.mallchat.common.chat.dao;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.hs.mallchat.common.chat.domain.entity.RoomGroup;
+import com.hs.mallchat.common.chat.domain.enums.MessageStatusEnum;
 import com.hs.mallchat.common.chat.mapper.RoomGroupMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,5 +32,11 @@ public class RoomGroupDao extends ServiceImpl<RoomGroupMapper, RoomGroup> {
         return lambdaQuery()
                 .eq(RoomGroup::getRoomId, roomId)
                 .one();
+    }
+
+    public Boolean deleteByRoomId(Long groupId) {
+        LambdaUpdateWrapper<RoomGroup> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(RoomGroup::getId, groupId);
+        return this.remove(wrapper);
     }
 }

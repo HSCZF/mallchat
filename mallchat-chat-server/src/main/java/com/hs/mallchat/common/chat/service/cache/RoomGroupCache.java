@@ -38,7 +38,11 @@ public class RoomGroupCache extends AbstractRedisStringCache<Long, RoomGroup> {
     @Override
     protected Map<Long, RoomGroup> load(List<Long> roomIds) {
         List<RoomGroup> roomGroups = roomGroupDao.listByRoomIds(roomIds);
-        return roomGroups.stream().collect(Collectors.toMap(RoomGroup::getId, Function.identity()));
+        // bug修复
+        // 在debug到AbstractRedisStringCache的load = load(loadReqs)的时候，比如表room_group有个房间id是6，roomId是8，全员群是手动数据库添加的，所以起初不会到这里面
+        // 拼接的时候key接上的是6不是8，导致会话端口获取不到数据
+        // 正确的是RoomGroup::getRoomId
+        return roomGroups.stream().collect(Collectors.toMap(RoomGroup::getRoomId, Function.identity()));
     }
 
 }

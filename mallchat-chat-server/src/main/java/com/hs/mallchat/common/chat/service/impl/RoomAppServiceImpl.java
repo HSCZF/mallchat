@@ -7,29 +7,51 @@ import com.hs.mallchat.common.chat.dao.GroupMemberDao;
 import com.hs.mallchat.common.chat.dao.MessageDao;
 import com.hs.mallchat.common.chat.domain.dto.RoomBaseInfo;
 import com.hs.mallchat.common.chat.domain.entity.*;
+import com.hs.mallchat.common.chat.domain.enums.GroupRoleAPPEnum;
+import com.hs.mallchat.common.chat.domain.enums.GroupRoleEnum;
+import com.hs.mallchat.common.chat.domain.enums.HotFlagEnum;
 import com.hs.mallchat.common.chat.domain.enums.RoomTypeEnum;
+import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMemberReq;
+import com.hs.mallchat.common.chat.domain.vo.request.GroupAddReq;
+import com.hs.mallchat.common.chat.domain.vo.request.MemberDelReq;
+import com.hs.mallchat.common.chat.domain.vo.request.member.MemberAddReq;
+import com.hs.mallchat.common.chat.domain.vo.request.member.MemberReq;
+import com.hs.mallchat.common.chat.domain.vo.response.ChatMemberListResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatRoomResp;
+import com.hs.mallchat.common.chat.domain.vo.response.MemberResp;
 import com.hs.mallchat.common.chat.service.ChatService;
 import com.hs.mallchat.common.chat.service.RoomAppService;
 import com.hs.mallchat.common.chat.service.RoomService;
 import com.hs.mallchat.common.chat.service.adapter.ChatAdapter;
+import com.hs.mallchat.common.chat.service.adapter.MemberAdapter;
+import com.hs.mallchat.common.chat.service.adapter.RoomAdapter;
 import com.hs.mallchat.common.chat.service.cache.*;
 import com.hs.mallchat.common.chat.service.strategy.msg.AbstractMsgHandler;
 import com.hs.mallchat.common.chat.service.strategy.msg.MsgHandlerFactory;
+import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
+import com.hs.mallchat.common.common.event.GroupMemberAddEvent;
+import com.hs.mallchat.common.common.exception.GroupErrorEnum;
 import com.hs.mallchat.common.common.utils.AssertUtil;
 import com.hs.mallchat.common.user.dao.UserDao;
 import com.hs.mallchat.common.user.domain.entity.User;
+import com.hs.mallchat.common.user.domain.enums.RoleEnum;
+import com.hs.mallchat.common.user.domain.vo.response.ws.ChatMemberResp;
+import com.hs.mallchat.common.user.domain.vo.response.ws.WSBaseResp;
+import com.hs.mallchat.common.user.domain.vo.response.ws.WSMemberChange;
 import com.hs.mallchat.common.user.service.IRoleService;
 import com.hs.mallchat.common.user.service.cache.UserCache;
 import com.hs.mallchat.common.user.service.cache.UserInfoCache;
 import com.hs.mallchat.common.user.service.impl.PushService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -139,6 +161,207 @@ public class RoomAppServiceImpl implements RoomAppService {
         RoomFriend friendRoom = roomService.getFriendRoom(uid, friendUid);
         AssertUtil.isNotEmpty(friendRoom, "他不是您的好友");
         return buildContactResp(uid, Collections.singletonList(friendRoom.getRoomId())).get(0);
+    }
+
+    @Override
+    @Cacheable(cacheNames = "member", key = "'memberList'+#request.roomId")
+    public List<ChatMemberListResp> getMemberList(ChatMessageMemberReq request) {
+        Room room = roomCache.get(request.getRoomId());
+        AssertUtil.isNotEmpty(room, "房间号有误");
+        if (isHotGroup(room)) { // 全员群展示所有用户100名
+            List<User> memberList = userDao.getMemberList();
+            return MemberAdapter.buildMemberList(memberList);
+        } else {
+            RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+            List<Long> memberUidList = groupMemberDao.getMemberUidList(roomGroup.getId());
+            Map<Long, User> batch = userInfoCache.getBatch(memberUidList);
+            return MemberAdapter.buildMemberList(batch);
+        }
+    }
+
+    /**
+     * 删除群组成员
+     * <p>
+     * 本方法用于将指定的用户从群组中移除，包括以下步骤：
+     * 1. 验证房间号是否正确；
+     * 2. 验证操作者是否为群主或管理员；
+     * 3. 判断被移除者是否能被移除，包括群主和管理员的特殊判断；
+     * 4. 判断操作者是否有权限移除成员；
+     * 5. 移除成员并发送事件通知；
+     * 6. 清理缓存数据。
+     * </p>
+     *
+     * @param uid     操作者的用户ID
+     * @param request 包含要移除成员的信息和房间ID的请求对象
+     * @throws Exception 如果操作不合法或数据不正确，将抛出异常
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delMember(Long uid, MemberDelReq request) {
+        // 验证房间号是否存在
+        Room room = roomCache.get(request.getRoomId());
+        AssertUtil.isNotEmpty(room, "房间号有误");
+
+        // 验证房间组是否存在
+        RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+        AssertUtil.isNotEmpty(roomGroup, "房间号有误");
+
+        // 验证操作者是否为群组成员
+        GroupMember self = groupMemberDao.getMember(roomGroup.getId(), uid);
+        AssertUtil.isNotEmpty(self, GroupErrorEnum.USER_NOT_IN_GROUP.getMsg());
+
+        // 获取被移除用户的ID
+        Long removedUid = request.getUid();
+
+        // 判断被移除的人是否是群主，群主不可被移除
+        AssertUtil.isFalse(groupMemberDao.isLord(roomGroup.getId(), removedUid), GroupErrorEnum.NOT_ALLOWED_FOR_REMOVE.getMsg());
+
+        // 判断被移除的人是否是管理员，管理员只能被群主移除
+        if (groupMemberDao.isManager(roomGroup.getId(), removedUid)) {
+            boolean isLord = groupMemberDao.isLord(roomGroup.getId(), uid);
+            AssertUtil.isTrue(isLord, GroupErrorEnum.NOT_ALLOWED_FOR_REMOVE.getMsg());
+        }
+
+        // 判断操作者是否有权限移除成员
+        AssertUtil.isTrue(hasPower(self), GroupErrorEnum.NOT_ALLOWED_FOR_REMOVE.getMsg());
+
+        // 验证被移除成员是否存在
+        GroupMember member = groupMemberDao.getMember(roomGroup.getId(), removedUid);
+        AssertUtil.isNotEmpty(member, "用户已经移除");
+
+        // 移除群组成员
+        groupMemberDao.removeById(member.getId());
+
+        // 发送移除事件通知所有群成员
+        List<Long> memberUidList = groupMemberCache.getMemberUidList(roomGroup.getRoomId());
+        WSBaseResp<WSMemberChange> ws = MemberAdapter.buildMemberRemoveWS(roomGroup.getRoomId(), member.getUid());
+        pushService.sendPushMsg(ws, memberUidList);
+
+        // 清理缓存数据
+        groupMemberCache.evictMemberUidList(room.getId());
+    }
+
+    /**
+     * 邀请好友加入房间
+     *
+     * @param uid    当前操作的用户ID
+     * @param request 包含要邀请的用户ID列表和房间ID的请求对象
+     */
+    @Override
+    @RedissonLock(key = "#request.roomId") // 使用Redisson分布式锁，确保同一房间的成员操作是原子性的
+    @Transactional(rollbackFor = Exception.class) // 事务注解，确保操作的原子性，遇到异常会回滚
+    public void addMember(Long uid, MemberAddReq request) {
+        Room room = roomCache.get(request.getRoomId()); // 从缓存中获取房间信息
+        AssertUtil.isNotEmpty(room, "房间号有误"); // 验证房间是否存在
+
+        // 判断是否为热门群组，热门群组不能邀请成员
+        AssertUtil.isFalse(isHotGroup(room), "全员群无需邀请好友");
+
+        RoomGroup roomGroup = roomGroupCache.get(request.getRoomId()); // 从缓存中获取房间组信息
+        AssertUtil.isNotEmpty(roomGroup, "房间号有误"); // 验证房间组是否存在
+
+        GroupMember self = groupMemberDao.getMember(roomGroup.getId(), uid); // 查询当前操作用户是否为群成员
+        AssertUtil.isNotEmpty(self, "您不是群成员"); // 验证当前操作用户是否为群成员
+
+        List<Long> memberBatch = groupMemberDao.getMemberBatch(roomGroup.getId(), request.getUidList()); // 查询待邀请用户中已存在的群成员
+        Set<Long> existUid = new HashSet<>(memberBatch); // 存储已存在的用户ID
+        List<Long> waitAddUidList = request.getUidList().stream()
+                .filter(a -> !existUid.contains(a)) // 过滤掉已存在的用户
+                .distinct() // 去重
+                .collect(Collectors.toList()); // 收集待添加的用户ID列表
+
+        // 如果没有需要添加的用户，则直接返回
+        if (CollectionUtils.isEmpty(waitAddUidList)) {
+            return;
+        }
+
+        List<GroupMember> groupMembers = MemberAdapter.buildMemberAdd(roomGroup.getId(), waitAddUidList); // 构建群成员对象列表
+        groupMemberDao.saveBatch(groupMembers); // 批量保存群成员
+
+        // 发布事件，通知有新的群成员加入
+        applicationEventPublisher.publishEvent(new GroupMemberAddEvent(this, roomGroup, groupMembers, uid));
+    }
+
+    /**
+     * 新增群组
+     *
+     * @param uid
+     * @param request
+     * @return
+     */
+    @Override
+    @Transactional
+    public Long addGroup(Long uid, GroupAddReq request) {
+        RoomGroup roomGroup = roomService.createGroupRoom(uid);
+        // 批量保存群成员
+        List<GroupMember> groupMembers = RoomAdapter.buildGroupMemberBatch(request.getUidList(), roomGroup.getId());
+        groupMemberDao.saveBatch(groupMembers);
+        // 发送邀请加群消息==》触发每个人的会话
+        applicationEventPublisher.publishEvent(new GroupMemberAddEvent(this, roomGroup, groupMembers, uid));
+        return roomGroup.getRoomId();
+    }
+
+    private boolean hasPower(GroupMember self) {
+        return Objects.equals(self.getRole(), GroupRoleEnum.LEADER.getType())       // LEADER(1, "群主"),
+                || Objects.equals(self.getRole(), GroupRoleEnum.MANAGER.getType())   // MANAGER(2, "管理"),MEMBER(3, "普通成员"),
+                || iRoleService.hasPower(self.getUid(), RoleEnum.ADMIN);            // ADMIN(1L, "超级管理员"),CHAT_MANAGER(2L, "抹茶群聊管理员"),
+    }
+
+    /**
+     * 获取群组信息
+     *
+     * @param uid
+     * @param roomId
+     */
+    @Override
+    public MemberResp getGroupDetail(Long uid, long roomId) {
+        RoomGroup roomGroup = roomGroupCache.get(roomId);
+        Room room = roomCache.get(roomId);
+        AssertUtil.isNotEmpty(roomGroup, "roomId有误");
+        Long onlineNum;
+        if (isHotGroup(room)) {
+            onlineNum = userCache.getOnlineNum();
+        } else {
+            List<Long> memberUidList = groupMemberDao.getMemberUidList(roomGroup.getId());
+            onlineNum = userDao.getOnlineCount(memberUidList).longValue();
+        }
+        GroupRoleAPPEnum groupRole = getGroupRole(uid, roomGroup, room);
+        return MemberResp.builder()
+                .avatar(roomGroup.getAvatar())
+                .roomId(roomId)
+                .groupName(roomGroup.getName())
+                .onlineNum(onlineNum)
+                .role(groupRole.getType())
+                .build();
+    }
+
+    @Override
+    public CursorPageBaseResp<ChatMemberResp> getMemberPage(MemberReq request) {
+        Room room = roomCache.get(request.getRoomId());
+        AssertUtil.isNotEmpty(room, "房间号有误");
+        List<Long> memberUidList;
+        if (isHotGroup(room)) {  // 全员群展示所有用户
+            memberUidList = null;
+        } else { // 只展示房间内的群成员
+            RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+            memberUidList = groupMemberDao.getMemberUidList(roomGroup.getId());
+        }
+        return chatService.getMemberPage(memberUidList, request);
+    }
+
+    private GroupRoleAPPEnum getGroupRole(Long uid, RoomGroup roomGroup, Room room) {
+        GroupMember member = Objects.isNull(uid) ? null : groupMemberDao.getMember(roomGroup.getId(), uid);
+        if (Objects.nonNull(member)) {
+            return GroupRoleAPPEnum.of(member.getRole());
+        } else if (isHotGroup(room)) {
+            return GroupRoleAPPEnum.MEMBER;
+        } else {
+            return GroupRoleAPPEnum.REMOVE;
+        }
+    }
+
+    private boolean isHotGroup(Room room) {
+        return HotFlagEnum.YES.getType().equals(room.getHotFlag());
     }
 
     private Double getCursorOrNull(String cursor) {

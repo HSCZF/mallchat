@@ -24,13 +24,15 @@ import lombok.*;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName(value = "user",autoResultMap = true)
+@TableName(value = "user", autoResultMap = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static Long UID_SYSTEM = 1L;//系统uid
 
     /**
      * 用户id
@@ -77,7 +79,7 @@ public class User implements Serializable {
     /**
      * ip信息
      */
-    @TableField(value = "ip_info",typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "ip_info", typeHandler = JacksonTypeHandler.class)
     private IpInfo ipInfo;
 
     /**
@@ -106,7 +108,7 @@ public class User implements Serializable {
 
 
     public void refreshIp(String ip) {
-        if(ipInfo == null){
+        if (ipInfo == null) {
             ipInfo = new IpInfo();
         }
         ipInfo.refreshIp(ip);
