@@ -1,9 +1,16 @@
+# 日志级别配置
+logging:
+  level:
+    org.springframework.web: info   # 设置 Spring Web 相关日志级别为 info
+    com.github.binarywang.demo.wx.mp: debug   # 设置 com.github.binarywang.demo.wx.mp 包下的日志级别为 debug
+    me.chanjar.weixin: debug        # 设置 me.chanjar.weixin 包下的日志级别为 debug
+
 # MyBatis-Plus 配置
 mybatis-plus:
   mapper-locations: classpath:mapper/**/*.xml
-#  configuration:
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-#    map-underscore-to-camel-case: true
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
 
 # Spring 配置
 spring:
@@ -17,6 +24,13 @@ spring:
     username: ${mallchat.mysql.username}
     password: ${mallchat.mysql.password}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari: # HikariCP 数据库连接池配置
+      minimum-idle: 3         # 最小空闲连接数，默认值为 10
+      maximum-pool-size: 10   # 最大连接池大小，默认值为 10
+      max-lifetime: 30000     # 连接的最大生命周期（毫秒），默认值为300000（5分钟）,不能小于30秒，否则默认回到1800秒
+      connection-test-query: SELECT 1   # 用于测试连接有效性的 SQL 查询语句，默认为"SELECT 1"
+
+  # redis 配置
   redis:
     # Redis服务器地址
     host: ${mallchat.redis.host}
@@ -28,9 +42,13 @@ spring:
     timeout: 1800000
     # 设置密码
     password: ${mallchat.redis.password}
+
+  # jackson配置
   jackson:
     serialization:
       write-dates-as-timestamps: true
+
+  # mvc配置
   # 如果运行报错。Failed to start bean ‘documentationPluginsBootstrapper
   # 是因为springboot2.6.x后会有兼容问题，Springboot2.6以后将SpringMVC
   # 的默认路径匹配策略从AntPathMatcher 更改为PathPatternParser，导致出错。

@@ -11,14 +11,12 @@ import com.hs.mallchat.utils.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.validation.constraints.NotNull;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -42,7 +40,7 @@ public class SecureInvokeService {
     private final SecureInvokeRecordDao secureInvokeRecordDao;
     private final Executor executor;
 
-    // 定时任务，每5分钟执行一次，获取并重试所有等待重试的记录
+    // 定时任务，每5秒执行一次，获取并重试所有等待重试的记录
     @Scheduled(cron = "*/5 * * * * ?")
     public void retry() {
         // 获取所有待重试的记录
