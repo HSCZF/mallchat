@@ -50,7 +50,7 @@ public class GroupMemberAddListener {
     private PushService pushService;
 
 
-    @Async
+    //@Async
     @TransactionalEventListener(classes = GroupMemberAddEvent.class, fallbackExecution = true)
     public void sendAddMsg(GroupMemberAddEvent event) {
         List<GroupMember> memberList = event.getMemberList();

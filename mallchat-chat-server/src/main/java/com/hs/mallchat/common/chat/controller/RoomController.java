@@ -92,10 +92,13 @@ public class RoomController {
         return ApiResult.success();
     }
 
-//    @GetMapping("/public/group/member/page")
-//    @ApiOperation("群成员列表")
+    @GetMapping("/public/group/member/page")
+    @ApiOperation("群成员列表")
     public ApiResult<CursorPageBaseResp<ChatMemberResp>> getMemberPage(@Valid MemberReq request) {
-        // todo：有一个bug，空指针异常，GroupMember表现在还没有数据，查出来是null，第二次查询游标会变成 2_null
+        // 有一个bug，空指针异常，GroupMember表现在还没有数据，查出来是null，第二次查询游标会变成 2_null
+        // bug解决，ChatServiceImpl第348，349忘了赋值了
+        //  timeCursor = cursorPage.getCursor();
+        //  isLast = cursorPage.getIsLast();
         return ApiResult.success(roomService.getMemberPage(request));
     }
 

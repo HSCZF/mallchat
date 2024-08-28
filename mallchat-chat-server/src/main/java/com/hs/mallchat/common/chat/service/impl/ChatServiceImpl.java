@@ -175,14 +175,15 @@ public class ChatServiceImpl implements ChatService {
         }
         AssertUtil.isNotEmpty(receiveUid, "请先登录");
         Contact contact = contactDao.get(receiveUid, roomId);
-        // 先检查contact是否为null
+        // 这个bug解决改造，@Async 异步处理的数据没有那么快
+        // 这段if代码主要解决创建群组后的bug，创建群组后，系统会发送一条消息，但是contact表中的lastMsgId为null，导致后面获取消息列表时，会报错
+        // contact的表需要经过GroupMemberAddListener的sendAddMsg方法
+        // GroupMemberAddListener.sendAddMsg()->chatService.sendMsg()->applicationEventPublisher.publishEvent(new MessageSendEvent(this, msgId))
+        // ->MessageSendListener.messageRoute()->mqProducer发送topic名称为MQConstant.SEND_MSG_TOPIC，被MsgSendConsumerMQ消费者消费
+        // ->contactDao.refreshOrCreateActiveTime()进行执行数据库操作，此时新增群组的会话才有数据，所以contact.getLastMsgId()会null，就报错
+        // 解决方案：1、GroupMemberAddListener.sendAddMsg()方法改为同步执行
+        //         2、这里判断contact是不是null
         if (Objects.isNull(contact)) {
-            // 这个bug解决改造
-            // 这段if代码主要解决创建群组后的bug，创建群组后，系统会发送一条消息，但是contact表中的lastMsgId为null，导致后面获取消息列表时，会报错
-            // contact的表需要经过GroupMemberAddListener的sendAddMsg方法
-            // GroupMemberAddListener.sendAddMsg()->chatService.sendMsg()->applicationEventPublisher.publishEvent(new MessageSendEvent(this, msgId))
-            // ->MessageSendListener.messageRoute()->mqProducer发送topic名称为MQConstant.SEND_MSG_TOPIC，被MsgSendConsumerMQ消费者消费
-            // ->contactDao.refreshOrCreateActiveTime()进行执行数据库操作，此时新增群组的会话才有数据，所以contact.getLastMsgId()会null，就报错
             Message message = messageDao.getByUidAndRoomId(roomId, User.UID_SYSTEM);
             return message.getId();
         } else if (Objects.isNull(contact.getLastMsgId())) {
@@ -320,18 +321,21 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 获取群成员列表
      *
-     * @param memberUidList
-     * @param request
-     * @return
+     * @param memberUidList 群成员UID列表
+     * @param request       查询请求
+     * @return 返回群成员列表的游标分页响应
      */
     @Override
     public CursorPageBaseResp<ChatMemberResp> getMemberPage(List<Long> memberUidList, MemberReq request) {
+        // 解析游标
         Pair<ChatActiveStatusEnum, String> pair = ChatMemberHelper.getCursorPair(request.getCursor());
         ChatActiveStatusEnum activeStatusEnum = pair.getKey();
         String timeCursor = pair.getValue();
         List<ChatMemberResp> resultList = new ArrayList<>();
         Boolean isLast = Boolean.FALSE;
+
         if (activeStatusEnum == ChatActiveStatusEnum.ONLINE) {
+            // 获取在线用户分页数据
             CursorPageBaseResp<User> cursorPage = userDao.getCursorPage(memberUidList, new CursorPageBaseReq(request.getPageSize(), timeCursor), ChatActiveStatusEnum.ONLINE);
             // 在线列表
             resultList.addAll(MemberAdapter.buildMember(cursorPage.getList()));
@@ -342,18 +346,24 @@ public class ChatServiceImpl implements ChatService {
                 // 添加离线列表
                 resultList.addAll(MemberAdapter.buildMember(cursorPage.getList()));
             }
+            timeCursor = cursorPage.getCursor();
+            isLast = cursorPage.getIsLast();
         } else if (activeStatusEnum == ChatActiveStatusEnum.OFFLINE) {
+            // 获取离线用户分页数据
             CursorPageBaseResp<User> cursorPage = userDao.getCursorPage(memberUidList, new CursorPageBaseReq(request.getPageSize(), timeCursor), ChatActiveStatusEnum.OFFLINE);
             resultList.addAll(MemberAdapter.buildMember(cursorPage.getList()));
             timeCursor = cursorPage.getCursor();
             isLast = cursorPage.getIsLast();
         }
+
         // 获取群成员角色ID
         List<Long> uidList = resultList.stream().map(ChatMemberResp::getUid).collect(Collectors.toList());
         RoomGroup roomGroup = roomGroupDao.getByRoomId(request.getRoomId());
         Map<Long, Integer> uidMapRole = groupMemberDao.getMemberMapRole(roomGroup.getId(), uidList);
         resultList.forEach(member -> member.setRoleId(uidMapRole.get(member.getUid())));
+
         // 组装结果
         return new CursorPageBaseResp<>(ChatMemberHelper.generateCursor(activeStatusEnum, timeCursor), isLast, resultList);
     }
+
 }
