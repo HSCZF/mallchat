@@ -88,9 +88,11 @@ public class CursorUtils {
         }
         // 按照游标字段降序排序
         wrapper.orderByDesc(cursorColumn);
-
+        // 游标翻页默认不去计算count(1)，太耗时了，也用不上
+        Page pageReq = request.plusPage();
+        pageReq.setSearchCount(false);
         // 执行分页查询
-        Page<T> page = mapper.page(request.plusPage(), wrapper);
+        Page<T> page = mapper.page(pageReq, wrapper);
         // 计算新的游标值
         String cursor = Optional.ofNullable(CollectionUtil.getLast(page.getRecords()))
                 .map(cursorColumn)
