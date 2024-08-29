@@ -47,7 +47,6 @@ import com.hs.mallchat.common.user.service.impl.PushService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -173,7 +172,13 @@ public class RoomAppServiceImpl implements RoomAppService {
             return MemberAdapter.buildMemberList(memberList);
         } else {
             RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+            if (Objects.isNull(roomGroup)) {
+                return MemberAdapter.buildMemberList(Collections.emptyList());
+            }
             List<Long> memberUidList = groupMemberDao.getMemberUidList(roomGroup.getId());
+            if (CollectionUtil.isEmpty(memberUidList)) {
+                return MemberAdapter.buildMemberList(Collections.emptyList());
+            }
             Map<Long, User> batch = userInfoCache.getBatch(memberUidList);
             return MemberAdapter.buildMemberList(batch);
         }
@@ -244,7 +249,7 @@ public class RoomAppServiceImpl implements RoomAppService {
     /**
      * 邀请好友加入房间
      *
-     * @param uid    当前操作的用户ID
+     * @param uid     当前操作的用户ID
      * @param request 包含要邀请的用户ID列表和房间ID的请求对象
      */
     @Override
@@ -317,6 +322,10 @@ public class RoomAppServiceImpl implements RoomAppService {
     public MemberResp getGroupDetail(Long uid, long roomId) {
         RoomGroup roomGroup = roomGroupCache.get(roomId);
         Room room = roomCache.get(roomId);
+        // 也有可能不是群聊的会进来，需要对单聊进行拦截
+        if(RoomTypeEnum.FRIEND.getType().equals(room.getType())){
+            return MemberResp.builder().build();
+        }
         AssertUtil.isNotEmpty(roomGroup, "roomId有误");
         Long onlineNum;
         if (isHotGroup(room)) {
@@ -344,7 +353,13 @@ public class RoomAppServiceImpl implements RoomAppService {
             memberUidList = null;
         } else { // 只展示房间内的群成员
             RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+            if (Objects.isNull(roomGroup)) {
+                return CursorPageBaseResp.empty();
+            }
             memberUidList = groupMemberDao.getMemberUidList(roomGroup.getId());
+            if (CollectionUtil.isEmpty(memberUidList)) {
+                return CursorPageBaseResp.empty();
+            }
         }
         return chatService.getMemberPage(memberUidList, request);
     }

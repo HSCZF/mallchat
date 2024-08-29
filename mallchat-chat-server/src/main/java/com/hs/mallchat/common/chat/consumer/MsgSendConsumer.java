@@ -74,6 +74,10 @@ public class MsgSendConsumer implements RocketMQListener<MsgSendMessageDTO> {
         Message message = messageDao.getById(dto.getMsgId());
         // 根据消息的房间ID获取房间对象
         Room room = roomCache.get(message.getRoomId());
+        // 群组房间删除后会出现的问题
+        if(Objects.isNull(room)){
+            return;
+        }
         // 根据消息对象生成聊天消息响应对象，组装给前端
         ChatMessageResp msgResp = chatService.getMsgResp(message, null);
         // 更新房间的活跃时间，并在数据库中保存

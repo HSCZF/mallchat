@@ -1,14 +1,14 @@
 package com.hs.mallchat.common.chat.service.impl;
 
 import com.hs.mallchat.common.chat.dao.*;
-import com.hs.mallchat.common.chat.domain.entity.Contact;
-import com.hs.mallchat.common.chat.domain.entity.GroupMember;
 import com.hs.mallchat.common.chat.domain.entity.Room;
 import com.hs.mallchat.common.chat.domain.entity.RoomGroup;
 import com.hs.mallchat.common.chat.domain.vo.request.member.MemberExitReq;
 import com.hs.mallchat.common.chat.service.IGroupMemberService;
 import com.hs.mallchat.common.chat.service.adapter.MemberAdapter;
 import com.hs.mallchat.common.chat.service.cache.GroupMemberCache;
+import com.hs.mallchat.common.chat.service.cache.RoomCache;
+import com.hs.mallchat.common.chat.service.cache.RoomGroupCache;
 import com.hs.mallchat.common.common.exception.CommonErrorEnum;
 import com.hs.mallchat.common.common.exception.GroupErrorEnum;
 import com.hs.mallchat.common.common.utils.AssertUtil;
@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,6 +53,11 @@ public class GroupMemberServiceImpl implements IGroupMemberService {
 
     @Autowired
     private PushService pushService;
+
+    @Resource
+    private RoomCache roomCache;
+    @Resource
+    private RoomGroupCache roomGroupCache;
 
     /**
      * 退出群聊
@@ -104,9 +109,13 @@ public class GroupMemberServiceImpl implements IGroupMemberService {
             List<Long> memberUidList = groupMemberCache.getMemberUidList(roomGroup.getRoomId());
             WSBaseResp<WSMemberChange> ws = MemberAdapter.buildMemberRemoveWS(roomGroup.getRoomId(), uid);
             pushService.sendPushMsg(ws, memberUidList);
-            // 清理这个房间的缓存数据
-            groupMemberCache.evictMemberUidList(room.getId());
         }
+        // 清理这个房间成员的缓存数据
+        groupMemberCache.evictMemberUidList(room.getId());
+        // 清理这个房间的缓存数据
+        roomCache.delete(room.getId());
+        // 清理这个房间群主的缓存数据
+        roomGroupCache.delete(room.getId());
 
     }
 }
