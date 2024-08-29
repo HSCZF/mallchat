@@ -1,8 +1,11 @@
 package com.hs.mallchat.common.chat.service.impl;
 
+import com.hs.mallchat.common.chat.constant.GroupConst;
 import com.hs.mallchat.common.chat.dao.*;
 import com.hs.mallchat.common.chat.domain.entity.Room;
 import com.hs.mallchat.common.chat.domain.entity.RoomGroup;
+import com.hs.mallchat.common.chat.domain.vo.request.admin.AdminAddReq;
+import com.hs.mallchat.common.chat.domain.vo.request.admin.AdminRevokeReq;
 import com.hs.mallchat.common.chat.domain.vo.request.member.MemberExitReq;
 import com.hs.mallchat.common.chat.service.IGroupMemberService;
 import com.hs.mallchat.common.chat.service.adapter.MemberAdapter;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -117,5 +121,53 @@ public class GroupMemberServiceImpl implements IGroupMemberService {
         // 清理这个房间群主的缓存数据
         roomGroupCache.delete(room.getId());
 
+    }
+
+    /**
+     * 增加管理员
+     *
+     * @param uid
+     * @param request
+     */
+    @Override
+    public void addAdmin(Long uid, AdminAddReq request) {
+        // 1、判断群聊是否存在
+        RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+        AssertUtil.isNotEmpty(roomGroup, GroupErrorEnum.GROUP_NOT_EXIST.getMsg());
+        // 2、是否为群主操作
+        boolean isLord = groupMemberDao.isLord(roomGroup.getId(), uid);
+        AssertUtil.isTrue(isLord, GroupErrorEnum.NOT_ALLOWED_OPERATION);
+        // 3、判断群成员是否在群中
+        boolean isGroupShip = groupMemberDao.isGroupShip(request.getRoomId(), request.getUidList());
+        AssertUtil.isTrue(isGroupShip, GroupErrorEnum.USER_NOT_IN_GROUP);
+        // 4、管理员是否到达上限了
+        // 查询现在的管理员数量
+        List<Long> manageUidList = groupMemberDao.getManageUidList(roomGroup.getId());
+        // 去重
+        HashSet<Long> manageUidSet = new HashSet<>(manageUidList);
+        AssertUtil.isFalse(manageUidSet.size() > GroupConst.MAX_MANAGE_COUNT, GroupErrorEnum.MANAGE_COUNT_EXCEED);
+        // 5、添加管理员
+        groupMemberDao.addAdmin(roomGroup.getId(), request.getUidList());
+    }
+
+    /**
+     * 撤销管理员
+     *
+     * @param uid
+     * @param request
+     */
+    @Override
+    public void revokeAdmin(Long uid, AdminRevokeReq request) {
+        // 1、判断群聊是否存在
+        RoomGroup roomGroup = roomGroupCache.get(request.getRoomId());
+        AssertUtil.isNotEmpty(roomGroup, GroupErrorEnum.GROUP_NOT_EXIST.getMsg());
+        // 2、是否为群主操作
+        boolean isLord = groupMemberDao.isLord(roomGroup.getId(), uid);
+        AssertUtil.isTrue(isLord, GroupErrorEnum.NOT_ALLOWED_OPERATION);
+        // 3、判断群成员是否在群中
+        boolean isGroupShip = groupMemberDao.isGroupShip(request.getRoomId(), request.getUidList());
+        AssertUtil.isTrue(isGroupShip, GroupErrorEnum.USER_NOT_IN_GROUP);
+        // 4. 撤销管理员
+        groupMemberDao.revokeAdmin(roomGroup.getId(), request.getUidList());
     }
 }

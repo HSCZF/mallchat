@@ -4,6 +4,8 @@ package com.hs.mallchat.common.chat.controller;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageMemberReq;
 import com.hs.mallchat.common.chat.domain.vo.request.GroupAddReq;
 import com.hs.mallchat.common.chat.domain.vo.request.MemberDelReq;
+import com.hs.mallchat.common.chat.domain.vo.request.admin.AdminAddReq;
+import com.hs.mallchat.common.chat.domain.vo.request.admin.AdminRevokeReq;
 import com.hs.mallchat.common.chat.domain.vo.request.member.MemberAddReq;
 import com.hs.mallchat.common.chat.domain.vo.request.member.MemberExitReq;
 import com.hs.mallchat.common.chat.domain.vo.request.member.MemberReq;
@@ -101,6 +103,23 @@ public class RoomController {
         //  isLast = cursorPage.getIsLast();
         return ApiResult.success(roomService.getMemberPage(request));
     }
+
+    @PutMapping("/group/admin")
+    @ApiOperation("添加管理员")
+    public ApiResult<Boolean> addAdmin(@Valid @RequestBody AdminAddReq request) {
+        Long uid = RequestHolder.get().getUid();
+        groupMemberService.addAdmin(uid, request);
+        return ApiResult.success();
+    }
+
+    @DeleteMapping("/group/admin")
+    @ApiOperation("撤销管理员")
+    public ApiResult<Boolean> revokeAdmin(@Valid @RequestBody AdminRevokeReq request) {
+        Long uid = RequestHolder.get().getUid();
+        groupMemberService.revokeAdmin(uid, request);
+        return ApiResult.success();
+    }
+
 
 }
 

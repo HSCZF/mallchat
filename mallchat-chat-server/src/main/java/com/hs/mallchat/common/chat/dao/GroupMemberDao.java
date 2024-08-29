@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.hs.mallchat.common.chat.domain.entity.GroupMember;
 import com.hs.mallchat.common.chat.domain.enums.GroupRoleEnum;
 import com.hs.mallchat.common.chat.mapper.GroupMemberMapper;
@@ -155,5 +157,46 @@ public class GroupMemberDao extends ServiceImpl<GroupMemberMapper, GroupMember> 
                 .eq(GroupMember::getGroupId, groupId)
                 .eq(GroupMember::getRole, leader)
                 .one();
+    }
+
+    public List<Long> getManageUidList(Long id) {
+        return lambdaQuery()
+                .eq(GroupMember::getGroupId, id)
+                .eq(GroupMember::getRole, GroupRoleEnum.MANAGER.getType())
+                .list()
+                .stream()
+                .map(GroupMember::getUid)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 增加管理员
+     *
+     * @param id
+     * @param uidList
+     */
+    public void addAdmin(Long id, List<Long> uidList) {
+        LambdaUpdateWrapper<GroupMember> wrapper = new UpdateWrapper<GroupMember>()
+                .lambda()
+                .eq(GroupMember::getGroupId, id)
+                .in(GroupMember::getUid, uidList)
+                .set(GroupMember::getRole, GroupRoleEnum.MANAGER.getType());
+        this.update(wrapper);
+
+    }
+
+    /**
+     * 撤销管理员
+     *
+     * @param id
+     * @param uidList
+     */
+    public void revokeAdmin(Long id, List<Long> uidList) {
+        LambdaUpdateWrapper<GroupMember> wrapper = new UpdateWrapper<GroupMember>()
+                .lambda()
+                .eq(GroupMember::getGroupId, id)
+                .in(GroupMember::getUid, uidList)
+                .set(GroupMember::getRole, GroupRoleEnum.MEMBER.getType());
+        this.update(wrapper);
     }
 }

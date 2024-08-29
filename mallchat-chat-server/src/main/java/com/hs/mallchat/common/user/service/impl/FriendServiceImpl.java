@@ -10,6 +10,7 @@ import com.hs.mallchat.common.chat.service.adapter.MessageAdapter;
 import com.hs.mallchat.common.common.annotation.RedissonLock;
 import com.hs.mallchat.common.common.domain.vo.request.CursorPageBaseReq;
 import com.hs.mallchat.common.common.domain.vo.request.PageBaseReq;
+import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.domain.vo.response.PageBaseResp;
 import com.hs.mallchat.common.common.event.UserApplyEvent;
@@ -29,6 +30,7 @@ import com.hs.mallchat.common.user.domain.vo.response.friend.FriendResp;
 import com.hs.mallchat.common.user.domain.vo.response.friend.FriendUnreadResp;
 import com.hs.mallchat.common.user.service.FriendService;
 import com.hs.mallchat.common.user.service.adapter.FriendAdapter;
+import com.sun.net.httpserver.Authenticator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +118,7 @@ public class FriendServiceImpl implements FriendService {
         UserApply selfApproving = userApplyDao.getFriendApproving(uid, request.getTargetUid());
         if (Objects.nonNull(selfApproving)) {
             log.info("已有好友申请记录,uid:{}, targetId:{}", uid, request.getTargetUid());
+            AssertUtil.isEmpty(selfApproving,"已有好友申请记录");
             return;
         }
         //是否有待审批的申请记录(别人请求自己的)
