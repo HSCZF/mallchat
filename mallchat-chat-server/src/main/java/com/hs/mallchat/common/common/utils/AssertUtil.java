@@ -1,6 +1,7 @@
 package com.hs.mallchat.common.common.utils;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.hs.mallchat.common.common.exception.BusinessErrorEnum;
 import com.hs.mallchat.common.common.exception.BusinessException;
 import com.hs.mallchat.common.common.exception.CommonErrorEnum;
 import com.hs.mallchat.common.common.exception.ErrorEnum;
@@ -152,7 +153,7 @@ public class AssertUtil {
 
     private static void throwException(ErrorEnum errorEnum, Object... arg) {
         if (Objects.isNull(errorEnum)) {
-            errorEnum = CommonErrorEnum.BUSINESS_ERROR;
+            errorEnum = BusinessErrorEnum.BUSINESS_ERROR;
         }
         throw new BusinessException(errorEnum.getErrorCode(), MessageFormat.format(errorEnum.getErrorMsg(), arg));
     }

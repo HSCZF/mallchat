@@ -2,8 +2,12 @@ package com.hs.mallchat.common.common.exception;
 
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
@@ -25,6 +29,7 @@ public class GlobalExceptionHandler {
      * @param e MethodArgumentNotValidException，方法参数不合法异常对象，包含具体的错误字段和错误信息。
      * @return ApiResult<?>，返回一个封装了错误信息的ApiResult对象，用于前端展示错误详情。
      */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     public ApiResult<?> methodArgumentNotValidException(MethodArgumentNotValidException e) {
         // 初始化一个字符串构建器，用于拼接所有的错误字段和错误信息。
@@ -40,6 +45,7 @@ public class GlobalExceptionHandler {
         String msg = errorMsg.toString();
         // 返回一个失败的ApiResult，错误信息为拼接好的字段错误信息。
         // 通过substring移除最后一个逗号，以提供更整洁的错误信息。
+        log.info("validation parameters error！The reason is:{}", msg);
         return ApiResult.fail(CommonErrorEnum.PARAM_INVALID.getCode(), msg.substring(0, msg.length() - 1));
     }
 
@@ -51,6 +57,7 @@ public class GlobalExceptionHandler {
      * @param e 业务逻辑异常对象，包含具体的错误码和错误信息。
      * @return 包含错误码和错误信息的ApiResult对象，表示业务操作失败。
      */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(value = BusinessException.class)
     public ApiResult<?> businessErrorException(BusinessException e) {
         // 记录业务异常的日志，方便问题追踪和定位。
@@ -58,6 +65,52 @@ public class GlobalExceptionHandler {
         // 返回业务操作失败的结果，其中包含错误码和错误信息。
         return ApiResult.fail(e.getErrorCode(), e.getErrorMsg());
     }
+
+    /**
+     * validation参数校验异常
+     */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(value = BindException.class)
+    public ApiResult bindException(BindException e) {
+        StringBuilder errorMsg = new StringBuilder();
+        e.getBindingResult().getFieldErrors().forEach(x -> errorMsg.append(x.getField()).append(x.getDefaultMessage()).append(","));
+        String message = errorMsg.toString();
+        log.info("validation parameters error！The reason is:{}", message);
+        return ApiResult.fail(CommonErrorEnum.PARAM_INVALID.getErrorCode(), message.substring(0, message.length() - 1));
+    }
+
+    /**
+     * 处理空指针异常
+     * @param e
+     * @return
+     */
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(value = NullPointerException.class)
+    public ApiResult exceptionHandler(NullPointerException e){
+        log.error("null point exception！The reason is: ", e);
+        return ApiResult.fail(CommonErrorEnum.SYSTEM_ERROR);
+    }
+
+    /**
+     * 未知异常
+     */
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(value = Exception.class)
+    public ApiResult systemExceptionHandler(Exception e) {
+        log.error("system exception！The reason is：{}", e.getMessage(), e);
+        return ApiResult.fail(CommonErrorEnum.SYSTEM_ERROR);
+    }
+
+    /**
+     * http请求方式不支持
+     */
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ApiResult<Void> handleException(HttpRequestMethodNotSupportedException e) {
+        log.error(e.getMessage(), e);
+        return ApiResult.fail(-1, String.format("不支持'%s'请求", e.getMethod()));
+    }
+
 
     /**
      * 最后一道防火墙，不能把后台异常给前端用户看，比如SQL之类

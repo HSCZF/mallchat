@@ -16,10 +16,15 @@ import lombok.Data;
 @Data
 public class BusinessException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
 
     protected Integer errorCode;
 
     protected String errorMsg;
+
+    public BusinessException() {
+        super();
+    }
 
     /**
      * 构造方法，使用错误信息初始化异常。
@@ -28,7 +33,6 @@ public class BusinessException extends RuntimeException {
      */
     public BusinessException(String errorMsg) {
         super(errorMsg);
-        this.errorCode = CommonErrorEnum.BUSINESS_ERROR.getErrorCode();
         this.errorMsg = errorMsg;
     }
 
@@ -44,6 +48,12 @@ public class BusinessException extends RuntimeException {
         this.errorMsg = errorMsg;
     }
 
+    public BusinessException(Integer errorCode, String errorMsg, Throwable cause) {
+        super(errorMsg, cause);
+        this.errorCode = errorCode;
+        this.errorMsg = errorMsg;
+    }
+
     /**
      * 构造方法，根据错误枚举{@link ErrorEnum}初始化异常。
      *
@@ -53,6 +63,16 @@ public class BusinessException extends RuntimeException {
         super(errorEnum.getErrorMsg());
         this.errorCode = errorEnum.getErrorCode();
         this.errorMsg = errorEnum.getErrorMsg();
+    }
+
+    @Override
+    public String getMessage() {
+        return errorMsg;
+    }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
     }
 
 }

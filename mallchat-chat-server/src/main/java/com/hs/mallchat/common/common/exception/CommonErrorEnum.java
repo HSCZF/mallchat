@@ -12,33 +12,23 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum CommonErrorEnum implements ErrorEnum{
 
-    BUSINESS_ERROR(0, "{0}"),
+    // BUSINESS_ERROR(0, "{0}"), //这个直接在PARAM_INVALID里面加上，直接携带参数信息
     SYSTEM_ERROR(-1, "系统出小差了，请稍后再试哦~~"),
-    PARAM_INVALID(-2, "参数校验失败"),
-    LOCK_LIMIT(-3, "请求太频繁了，请稍后再试"),
+    PARAM_INVALID(-2, "参数校验失败{0}"),
+    FREQUENCY_LIMIT(-3, "请求太频繁了，请稍后再试哦~~"),
+    LOCK_LIMIT(-4, "请求太频繁了，请稍后再试"),
     ;
 
     private final Integer code;
     private final String msg;
 
-
-    // 使用接口规范，使用枚举实现
-    /**
-     * 在ApiResult那直接获取错误码和错误信息
-     * return ApiResult.fail(CommonErrorEnum.SYSTEM_ERROR.getCode());
-     * return ApiResult.fail(CommonErrorEnum.SYSTEM_ERROR);
-     * 直接变成
-     *
-     * @return
-     */
-
     @Override
     public Integer getErrorCode() {
-        return code;
+        return this.code;
     }
 
     @Override
     public String getErrorMsg() {
-        return msg;
+        return this.msg;
     }
 }
