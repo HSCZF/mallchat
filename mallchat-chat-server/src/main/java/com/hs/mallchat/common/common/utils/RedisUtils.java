@@ -33,6 +33,15 @@ public class RedisUtils {
                 SpringUtil.getBean(StringRedisTemplate.class);
     }
 
+    /**
+     * key: 第一个键（KEYS[1]），即脚本的第一个参数。
+     * * * tl: 过期时间（秒），作为脚本的第二个参数（ARGV[1]）
+     * 检查键是否存在。
+     * <p>
+     * == 0 : 表示键不存在，执行里面的命令，设置键的值为1，并设置过期时间ttl。
+     * * * 设置键 key 的值为 1 并设置过期时间为 ttl 秒。返回 1，表示键已成功设置。
+     * 键已存在时进行自增操作：使用redis的INCR命令，自增1。
+     */
     private static final String LUA_INCR_EXPIRE =
             "local key,ttl=KEYS[1],ARGV[1] \n" +
                     " \n" +
@@ -43,8 +52,12 @@ public class RedisUtils {
                     "  return tonumber(redis.call('INCR',key)) \n" +
                     "end ";
 
-    public static Long inc(String key, int time, TimeUnit unit) {
+    public static Long incr(String key, int time, TimeUnit unit) {
+        // 执行Lua脚本
         RedisScript<Long> redisScript = new DefaultRedisScript<>(LUA_INCR_EXPIRE, Long.class);
+        // redisScript：Lua 脚本实例。
+        // Collections.singletonList(key)：键列表，包含单个键 key。
+        // 将时间单位转换为秒，并转换为字符串形式。
         return stringRedisTemplate.execute(redisScript, Collections.singletonList(key), String.valueOf(unit.toSeconds(time)));
     }
 

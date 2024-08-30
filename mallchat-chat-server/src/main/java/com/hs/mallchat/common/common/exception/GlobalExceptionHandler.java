@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
      */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(value = Exception.class)
-    public ApiResult systemExceptionHandler(Exception e) {
+    public ApiResult<?> systemExceptionHandler(Exception e) {
         log.error("system exception！The reason is：{}", e.getMessage(), e);
         return ApiResult.fail(CommonErrorEnum.SYSTEM_ERROR);
     }
@@ -109,6 +109,16 @@ public class GlobalExceptionHandler {
     public ApiResult<Void> handleException(HttpRequestMethodNotSupportedException e) {
         log.error(e.getMessage(), e);
         return ApiResult.fail(-1, String.format("不支持'%s'请求", e.getMethod()));
+    }
+
+    /**
+     * 限流异常
+     */
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    @ExceptionHandler(value = FrequencyControlException.class)
+    public ApiResult<?> frequencyControlExceptionHandler(FrequencyControlException e) {
+        log.info("frequencyControl exception！The reason is：{}", e.getMessage());
+        return ApiResult.fail(e.getErrorCode(), e.getMessage());
     }
 
 

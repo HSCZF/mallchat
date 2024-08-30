@@ -5,6 +5,7 @@ import com.hs.mallchat.common.chat.domain.vo.request.*;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageReadResp;
 import com.hs.mallchat.common.chat.domain.vo.response.ChatMessageResp;
 import com.hs.mallchat.common.chat.service.ChatService;
+import com.hs.mallchat.common.common.annotation.FrequencyControl;
 import com.hs.mallchat.common.common.domain.vo.response.ApiResult;
 import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.utils.RequestHolder;
@@ -61,14 +62,17 @@ public class ChatController {
      */
     @PostMapping("/msg")
     @ApiOperation("发消息")
+    @FrequencyControl(time = 5, count = 3, target = FrequencyControl.Target.UID)
+    @FrequencyControl(time = 30, count = 5, target = FrequencyControl.Target.UID)
+    @FrequencyControl(time = 60, count = 10, target = FrequencyControl.Target.UID)
     public ApiResult<ChatMessageResp> sendMsg(@Valid @RequestBody ChatMessageReq request) {
-        // todo 先不加自定义注解FrequencyControl，后面再加
         Long msgId = chatService.sendMsg(request, RequestHolder.get().getUid());
         return ApiResult.success(chatService.getMsgResp(msgId, RequestHolder.get().getUid()));
     }
 
     @PutMapping("/msg/mark")
     @ApiOperation("消息标记")
+    @FrequencyControl(time = 10, count = 5, target = FrequencyControl.Target.UID)
     public ApiResult<Void> setMsgMark(@Valid @RequestBody ChatMessageMarkReq request) {
         chatService.setMsgMark(RequestHolder.get().getUid(), request);
         return ApiResult.success();
@@ -76,6 +80,7 @@ public class ChatController {
 
     @PutMapping("/msg/recall")
     @ApiOperation("撤回消息")
+    @FrequencyControl(time = 20, count = 3, target = FrequencyControl.Target.UID)
     public ApiResult<Void> recallMsg(@Valid @RequestBody ChatMessageBaseReq request) {
         chatService.recallMsg(RequestHolder.get().getUid(), request);
         return ApiResult.success();
