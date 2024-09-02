@@ -5,10 +5,8 @@ import com.hs.mallchat.common.common.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.hs.mallchat.common.common.service.frequencycontrol.FrequencyControlStrategyFactory.TOTAL_COUNT_WITH_IN_FIX_TIME_FREQUENCY_CONTROLLER;
 
@@ -43,6 +41,14 @@ public class TotalCountWithInFixTimeFrequencyController extends AbstractFrequenc
     // 解释：该方法通过比较当前计数和限制计数来判断是否达到速率限制
     @Override
     protected boolean reachRateLimit(Map<String, FrequencyControlDTO> frequencyControlMap) {
+        // 排序，根据键值对中的计数(最大访问次数)进行排序
+        frequencyControlMap = frequencyControlMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.comparingInt(FrequencyControlDTO::getCount)))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (existing, replacement) -> existing, // 解决键冲突
+                        LinkedHashMap::new));
         ArrayList<String> frequencyKeys = new ArrayList<>(frequencyControlMap.keySet());
         List<Integer> countList = RedisUtils.mget(frequencyKeys, Integer.class);
         for (int i = 0; i < frequencyKeys.size(); i++) {

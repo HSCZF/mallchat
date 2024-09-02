@@ -1,6 +1,6 @@
 package com.hs.mallchat.common.common.annotation;
 
-import java.lang.annotation.Repeatable;
+import java.lang.annotation.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -11,7 +11,9 @@ import java.util.concurrent.TimeUnit;
  * @Create: 2024/8/30 - 8:52
  */
 // @Repeatable 元注解用于指定一个容器注解，使得可以在同一个声明位置多次使用同一个注解。
-@Repeatable(FrequencyControlContainer.class)
+@Repeatable(FrequencyControlContainer.class)    // 可重复
+@Retention(RetentionPolicy.RUNTIME)       // 运行时生效
+@Target(ElementType.METHOD)               // 作用在方法上
 public @interface FrequencyControl {
 
     /**
