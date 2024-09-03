@@ -108,7 +108,7 @@ public class UserCache {
     /**
      * 获取用户信息，盘路缓存模式
      */
-    private Map<Long, User> getUserInfoBatch(Set<Long> uids) {
+    public Map<Long, User> getUserInfoBatch(Set<Long> uids) {
         //批量组装key
         List<String> keys = uids.stream().map(a -> RedisKey.getKey(RedisKey.USER_INFO_STRING, a)).collect(Collectors.toList());
         //批量get

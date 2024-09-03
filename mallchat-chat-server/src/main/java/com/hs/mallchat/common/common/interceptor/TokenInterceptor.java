@@ -48,6 +48,7 @@ public class TokenInterceptor implements HandlerInterceptor {
                 return false;
             }
         }
+        // 加入链路追踪uid
         MDC.put(MDCKey.UID, String.valueOf(validUid));
         return true;
     }
