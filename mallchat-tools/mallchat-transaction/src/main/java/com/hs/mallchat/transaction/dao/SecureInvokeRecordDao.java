@@ -6,7 +6,6 @@ import com.hs.mallchat.transaction.domain.entity.SecureInvokeRecord;
 import com.hs.mallchat.transaction.mapper.SecureInvokeRecordMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hs.mallchat.transaction.service.SecureInvokeService;
-import com.sun.org.apache.xml.internal.security.Init;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;

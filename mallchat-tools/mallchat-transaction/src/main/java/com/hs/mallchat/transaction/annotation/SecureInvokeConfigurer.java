@@ -1,9 +1,7 @@
 package com.hs.mallchat.transaction.annotation;
 
 
-import org.springframework.lang.Nullable;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
+import javax.annotation.Nullable;
 import java.util.concurrent.Executor;
 
 /**

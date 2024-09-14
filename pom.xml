@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.6.7</version>
+        <version>2.7.18</version>
         <relativePath/>
     </parent>
 
@@ -136,6 +136,25 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+   <build>
+       <plugins>
+           <plugin>
+               <groupId>org.owasp</groupId>
+               <artifactId>dependency-check-maven</artifactId>
+               <version>7.0.4</version> <!-- 请替换为实际的版本号 -->
+               <configuration>
+                   <autoUpdate>true</autoUpdate>
+               </configuration>
+               <executions>
+                   <execution>
+                       <goals>
+                           <goal>check</goal>
+                       </goals>
+                   </execution>
+               </executions>
+           </plugin>
+       </plugins>
+   </build>
 
 
 

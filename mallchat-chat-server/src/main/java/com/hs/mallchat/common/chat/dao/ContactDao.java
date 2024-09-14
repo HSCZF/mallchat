@@ -3,7 +3,6 @@ package com.hs.mallchat.common.chat.dao;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.hs.mallchat.common.chat.domain.entity.Contact;
 import com.hs.mallchat.common.chat.domain.entity.Message;
 import com.hs.mallchat.common.chat.domain.vo.request.ChatMessageReadReq;
@@ -14,7 +13,6 @@ import com.hs.mallchat.common.common.domain.vo.response.CursorPageBaseResp;
 import com.hs.mallchat.common.common.utils.CursorUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 

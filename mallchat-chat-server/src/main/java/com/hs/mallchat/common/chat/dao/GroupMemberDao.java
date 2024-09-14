@@ -9,10 +9,8 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.hs.mallchat.common.chat.domain.entity.GroupMember;
 import com.hs.mallchat.common.chat.domain.enums.GroupRoleEnum;
 import com.hs.mallchat.common.chat.mapper.GroupMemberMapper;
-import com.hs.mallchat.common.chat.service.IGroupMemberService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hs.mallchat.common.chat.service.cache.GroupMemberCache;
-import com.hs.mallchat.common.common.exception.ErrorEnum;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 

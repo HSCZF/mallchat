@@ -1,12 +1,9 @@
 package com.hs.mallchat.common.chat.dao;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.hs.mallchat.common.chat.domain.entity.RoomGroup;
-import com.hs.mallchat.common.chat.domain.enums.MessageStatusEnum;
 import com.hs.mallchat.common.chat.mapper.RoomGroupMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hs.mallchat.common.common.domain.enums.NormalOrNoEnum;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

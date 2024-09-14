@@ -8,13 +8,11 @@ import com.hs.mallchat.common.user.domain.enums.WSRespTypeEnum;
 import com.hs.mallchat.common.user.domain.vo.response.ws.ChatMemberResp;
 import com.hs.mallchat.common.user.domain.vo.response.ws.WSBaseResp;
 import com.hs.mallchat.common.user.domain.vo.response.ws.WSMemberChange;
-import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

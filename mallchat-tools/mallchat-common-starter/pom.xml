@@ -104,11 +104,24 @@
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
         </dependency>
+
+        <!-- Fastjson 1.2.83 之前版本存在安全漏洞，该漏洞源于容易绕过默认的 autoType 关闭限制来反序列化不受信任的数据，
+        攻击者利用该漏洞可以攻击远程服务器。
+        rocketmq-spring-boot-starter:2.3.0 以下版本 存在安全漏洞，请升级版本。
+        如要使用，请用 <exclusions>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>fastjson</artifactId>
+                </exclusion>
+            </exclusions>
+        然后添加依赖<dependency> 引入比Fastjson 1.2.83及以上更高的版本-->
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-spring-boot-starter</artifactId>
-            <version>2.2.2</version>
+            <version>2.3.1</version>
         </dependency>
+
+
     </dependencies>
 
 </project>

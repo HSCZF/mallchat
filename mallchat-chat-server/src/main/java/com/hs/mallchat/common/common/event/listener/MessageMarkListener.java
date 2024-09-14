@@ -12,7 +12,6 @@ import com.hs.mallchat.common.user.domain.enums.ItemEnum;
 import com.hs.mallchat.common.user.service.IUserBackpackService;
 import com.hs.mallchat.common.user.service.adapter.WSAdapter;
 import com.hs.mallchat.common.user.service.impl.PushService;
-import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
