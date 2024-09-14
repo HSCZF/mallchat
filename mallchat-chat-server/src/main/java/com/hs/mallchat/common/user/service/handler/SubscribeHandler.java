@@ -32,6 +32,7 @@ public class SubscribeHandler extends AbstractHandler {
 
         WxMpXmlOutMessage responseResult = null;
         try {
+            responseResult = this.handleSpecial(weixinService, wxMessage);
         } catch (Exception e) {
             this.logger.error(e.getMessage(), e);
         }
@@ -48,5 +49,14 @@ public class SubscribeHandler extends AbstractHandler {
 
         return null;
     }
+
+    /**
+     * 处理特殊请求，比如如果是扫码进来的，可以做相应处理
+     */
+    private WxMpXmlOutMessage handleSpecial(WxMpService weixinService, WxMpXmlMessage wxMessage)
+            throws Exception {
+        return wxMsgService.scan(weixinService, wxMessage);
+    }
+
 
 }
